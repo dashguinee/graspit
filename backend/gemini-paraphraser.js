@@ -6,7 +6,7 @@
 class GeminiParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     // ZION's knowledge encoded as system instruction
     this.systemInstruction = `You are an expert at humanizing AI-generated text to pass AI detection.

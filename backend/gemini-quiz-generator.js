@@ -6,7 +6,7 @@
 class GeminiQuizGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     this.minimumPassScore = 70;
   }
 
