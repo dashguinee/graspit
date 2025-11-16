@@ -81,7 +81,11 @@ app.post('/api/submit-quiz', async (req, res) => {
 
     const session = sessions.get(sessionId);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({
+        error: 'Session expired or not found',
+        message: 'Your session may have expired. Please submit your text again to get a new quiz.',
+        code: 'SESSION_EXPIRED'
+      });
     }
 
     // Evaluate answers using LLM
@@ -152,7 +156,11 @@ app.post('/api/paraphrase', (req, res) => {
 
     const session = sessions.get(sessionId);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({
+        error: 'Session expired or not found',
+        message: 'Your session may have expired. Please submit your text again to get a new quiz.',
+        code: 'SESSION_EXPIRED'
+      });
     }
 
     if (!session.quizPassed) {

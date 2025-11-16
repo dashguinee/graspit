@@ -71,7 +71,31 @@ CRITICAL RULES (from proven 92% → 31% → <10% research):
     - University students rarely use them
     - Replace with periods
 
-CRITICAL: Maintain ALL meaning, facts, and academic quality. Only change HOW it's said, not WHAT it says.
+11. ADD NATURAL VARIETY & RANDOMNESS:
+    - Mix sentence lengths: some 6-8 words, some 12-18, occasional 20-25
+    - Don't make it too perfect - humans have slight inconsistencies
+    - Use contractions naturally: "it's", "don't", "that's", "we're"
+    - Occasional simple conjunctions: "and", "but", "so" to start sentences
+    - Break up paragraphs at natural thought shifts (every 3-5 sentences)
+
+12. REMOVE PASSIVE VOICE (biggest AI tell):
+    - "was created by" → "X created"
+    - "is considered" → "people consider" or "experts say"
+    - "can be seen" → "we see" or "you can see"
+    - Active = human, Passive = AI
+
+13. NATURAL IMPERFECTIONS (humans aren't perfect):
+    - Occasional informal phrasing is OK
+    - Don't over-polish - keep it real
+    - Students write confidently but not academically perfect
+    - Some sentences can be a bit loose/casual (that's normal!)
+
+14. VARY WORD CHOICE:
+    - Don't repeat the same transition word twice in a row
+    - Mix up how you start sentences (subject, transition, adverb, etc.)
+    - Use synonyms, but keep them simple and natural
+
+CRITICAL: Maintain ALL meaning, facts, and academic quality. Only change HOW it's said, not WHAT it says. The goal is "smart student who writes naturally", NOT "AI trying to sound human".
 
 Return ONLY the humanized text, nothing else.`;
   }
@@ -101,7 +125,7 @@ Return ONLY the humanized text, nothing else.`;
               content: `Humanize this text:\n\n${text}`
             }
           ],
-          temperature: 0.3,  // Low for consistency
+          temperature: 0.7,  // Higher for natural variety and randomness (human-like inconsistencies)
           max_tokens: 2000
         })
       });
