@@ -8,8 +8,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const LLMParaphraser = require('./llm-paraphraser');
-const LLMQuizGenerator = require('./llm-quiz-generator');
+const GeminiParaphraser = require('./gemini-paraphraser');
+const GeminiQuizGenerator = require('./gemini-quiz-generator');
 
 const app = express();
 const PORT = 3100;
@@ -19,10 +19,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
 
-// Initialize LLM engines with DeepSeek API
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-99b64a1c8d5a4b229335f315f28a50b1';
-const paraphraser = new LLMParaphraser(DEEPSEEK_API_KEY);
-const quizGen = new LLMQuizGenerator(DEEPSEEK_API_KEY);
+// Initialize LLM engines with Google Gemini API (FREE!)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyAZffegve-8w0WQo2AXDotvQrVbdmo0pEM';
+const paraphraser = new GeminiParaphraser(GEMINI_API_KEY);
+const quizGen = new GeminiQuizGenerator(GEMINI_API_KEY);
 
 // Store sessions temporarily (would use DB in production)
 const sessions = new Map();
