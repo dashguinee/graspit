@@ -11,6 +11,31 @@ class GeminiQuizGenerator {
     this.apiKey = apiKey;
     this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     this.minimumPassScore = 60; // Lowered from 70% - we want to verify they grasp content, not exam perfection
+    this.maxRetries = 2; // Retry Gemini calls before falling back
+  }
+
+  /**
+   * Retry wrapper for Gemini API calls
+   */
+  async withRetry(operation, operationName) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        console.log(`[QUIZ] ${operationName} attempt ${attempt}/${this.maxRetries} failed:`, error.message);
+
+        if (attempt < this.maxRetries) {
+          const delay = attempt * 500; // 500ms, 1000ms backoff
+          console.log(`[QUIZ] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    throw lastError;
   }
 
   /**
@@ -22,22 +47,33 @@ class GeminiQuizGenerator {
     console.log('[QUIZ] API URL:', this.apiUrl.substring(0, 100) + '...');
 
     const prompt = `
-You are a quiz generator. Read this text and create 2 comprehension questions that test true understanding.
+You are a quiz generator for students. Read this text and create 2 simple comprehension questions.
 
 TEXT:
 ${text}
 
 REQUIREMENTS:
-1. Questions should test UNDERSTANDING, not memorization
-2. Mix question types: main idea, reasoning, application, inference
-3. Keep questions clear and specific
-4. Each question should have keywords for answer validation
+1. Questions should test if students UNDERSTOOD the content (not memorization)
+2. Use SIMPLE, CLEAR language - avoid complex words like "paradox", "broader implication", "significance"
+3. Ask about: main idea, what the author means, or key points
+4. Make questions direct and easy to understand
+5. Each question should have 3-4 keywords students might use in their answer
+
+GOOD EXAMPLES:
+- "What is this text mainly about?"
+- "What does the author want you to understand?"
+- "Explain the key idea in your own words"
+
+BAD EXAMPLES (too complex):
+- "What paradox does the text present?"
+- "Analyze the broader implications"
+- "What is the significance of..."
 
 Return ONLY valid JSON in this exact format:
 {
   "questions": [
     {
-      "question": "What is the main purpose or focus of this text?",
+      "question": "What is the main idea of this text?",
       "keywords": ["keyword1", "keyword2", "keyword3"],
       "type": "main-idea"
     }
@@ -46,8 +82,10 @@ Return ONLY valid JSON in this exact format:
 `;
 
     try {
-      console.log('[QUIZ] Calling Gemini API...');
-      const response = await fetch(this.apiUrl, {
+      // Wrap Gemini call with retry logic
+      const quizData = await this.withRetry(async () => {
+        console.log('[QUIZ] Calling Gemini API...');
+        const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -73,10 +111,20 @@ Return ONLY valid JSON in this exact format:
 
       const data = await response.json();
 
-      // Safety check
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
-        throw new Error('Unexpected response from Gemini');
+      // Robust safety checks for Gemini response
+      if (!data.candidates || !data.candidates[0]) {
+        console.error('[QUIZ] Gemini returned no candidates:', JSON.stringify(data));
+        throw new Error('No candidates in Gemini response');
+      }
+
+      if (!data.candidates[0].content) {
+        console.error('[QUIZ] Gemini candidate has no content:', JSON.stringify(data.candidates[0]));
+        throw new Error('No content in Gemini candidate');
+      }
+
+      if (!data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        console.error('[QUIZ] Gemini content has no parts:', JSON.stringify(data.candidates[0].content));
+        throw new Error('No parts in Gemini content');
       }
 
       const content = data.candidates[0].content.parts[0].text;
@@ -99,8 +147,11 @@ Return ONLY valid JSON in this exact format:
         .replace(/\n/g, ' ')             // Remove newlines
         .replace(/\s+/g, ' ');           // Normalize whitespace
 
-      const quizData = JSON.parse(cleanJson);
+        const parsedQuiz = JSON.parse(cleanJson);
+        return parsedQuiz;
+      }, 'Quiz Generation'); // End of withRetry
 
+      // Format and return the quiz
       return {
         questions: quizData.questions.map((q, i) => ({
           id: i + 1,
@@ -178,10 +229,20 @@ Return ONLY valid JSON:
 
       const data = await response.json();
 
-      // Safety check
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
-        throw new Error('Unexpected response from Gemini');
+      // Robust safety checks for Gemini response
+      if (!data.candidates || !data.candidates[0]) {
+        console.error('[QUIZ] Gemini returned no candidates:', JSON.stringify(data));
+        throw new Error('No candidates in Gemini response');
+      }
+
+      if (!data.candidates[0].content) {
+        console.error('[QUIZ] Gemini candidate has no content:', JSON.stringify(data.candidates[0]));
+        throw new Error('No content in Gemini candidate');
+      }
+
+      if (!data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        console.error('[QUIZ] Gemini content has no parts:', JSON.stringify(data.candidates[0].content));
+        throw new Error('No parts in Gemini content');
       }
 
       const content = data.candidates[0].content.parts[0].text;
@@ -272,10 +333,20 @@ Return ONLY valid JSON:
 
       const data = await response.json();
 
-      // Safety check
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
-        throw new Error('Unexpected response from Gemini');
+      // Robust safety checks for Gemini response
+      if (!data.candidates || !data.candidates[0]) {
+        console.error('[QUIZ] Gemini returned no candidates:', JSON.stringify(data));
+        throw new Error('No candidates in Gemini response');
+      }
+
+      if (!data.candidates[0].content) {
+        console.error('[QUIZ] Gemini candidate has no content:', JSON.stringify(data.candidates[0]));
+        throw new Error('No content in Gemini candidate');
+      }
+
+      if (!data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        console.error('[QUIZ] Gemini content has no parts:', JSON.stringify(data.candidates[0].content));
+        throw new Error('No parts in Gemini content');
       }
 
       const content = data.candidates[0].content.parts[0].text;
