@@ -257,6 +257,21 @@ ZION Estimator provides instant feedback without waiting for external AI detecto
 | LLM Redundancy | 0 | 2 | Infinite |
 | Testing Coverage | Manual | Automated | ∞ |
 | Production Confidence | Medium | BULLETPROOF | 🔥 |
+| Quiz Generation | Fallback | Smart AI | FIXED ✅ |
+
+## 🛠️ POST-POLISH FIX - 2025-11-17
+
+**Issue Discovered:** Quiz showing generic fallback questions on production
+**Root Cause:** Vercel not installing backend dependencies (dotenv missing)
+**Fix:** Added `buildCommand: "cd backend && npm install"` to vercel.json
+**Status:** ✅ VERIFIED WORKING
+
+**Test Results:**
+- Before: Generic "What is the main topic of this text?"
+- After: Smart questions like "What is the primary message the author conveys about Artificial Intelligence's role in technology?"
+- Deployment: https://graspit-9jeoq1xac-diop-abdoul-azizs-projects.vercel.app
+- Build: 19 packages installed successfully
+- Quiz: Gemini generating content-specific questions ✅
 
 ---
 
