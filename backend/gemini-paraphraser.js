@@ -79,7 +79,9 @@ Return ONLY the humanized text, nothing else.`;
    * Paraphrase text using Gemini with ZION's knowledge
    */
   async paraphrase(text) {
+    console.log('[PARAPHRASER] Starting paraphrase...');
     try {
+      console.log('[PARAPHRASER] Calling Gemini API...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -104,12 +106,15 @@ Return ONLY the humanized text, nothing else.`;
       }
 
       const data = await response.json();
+      console.log('[PARAPHRASER] Got response from Gemini');
       const paraphrased = data.candidates[0].content.parts[0].text.trim();
+      console.log('[PARAPHRASER] Paraphrase complete, length:', paraphrased.length);
 
       return paraphrased;
 
     } catch (error) {
-      console.error('Error paraphrasing with Gemini:', error);
+      console.error('[PARAPHRASER] ERROR:', error.message);
+      console.error('[PARAPHRASER] Falling back to rule-based');
       // Fallback to rule-based if LLM fails
       return this.fallbackParaphrase(text);
     }
