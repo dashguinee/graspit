@@ -1,9 +1,10 @@
 /**
  * Graspit Frontend Logic
- * Handles user interactions and API calls
+ * "You gotta grasp it before re-write it"
+ * Built with 💙 by Dash & ZION
  */
 
-const API_URL = 'http://localhost:3100/api';
+const API_URL = '/api';
 
 // State management
 let currentSessionId = null;
