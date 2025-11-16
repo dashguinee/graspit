@@ -10,7 +10,7 @@ class GeminiQuizGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey;
     this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    this.minimumPassScore = 70;
+    this.minimumPassScore = 60; // Lowered from 70% - we want to verify they grasp content, not exam perfection
   }
 
   /**
@@ -125,21 +125,28 @@ Return ONLY valid JSON in this exact format:
    */
   async evaluateAnswers(questions, userAnswers) {
     const evaluationPrompt = `
-You are evaluating quiz answers. For each question and answer pair, determine if the answer demonstrates understanding.
+You are evaluating quiz answers. Your goal: Did the student GRASP the content? Not exam perfection.
 
-Be LENIENT - if the answer shows they grasped the concept, mark it correct even if wording differs.
+SCORING GUIDE (0.0-1.0):
+- 1.0 = Fully grasped the concept, expressed clearly
+- 0.8-0.9 = Good understanding, minor wording issues or incomplete
+- 0.6-0.7 = Partial grasp, touched on key ideas but missing depth
+- 0.4-0.5 = Vague understanding, some relevant points
+- 0.0-0.3 = Missed the concept or no answer
+
+Be GENEROUS with partial credit. If they show ANY understanding of the concept, give at least 0.5.
 
 ${questions.map((q, i) => `
 Q${i + 1}: ${q.question}
 User Answer: "${userAnswers[i] || 'NO ANSWER'}"
-Keywords to look for: ${q.keywords.join(', ')}
+Key concepts to look for: ${q.keywords.join(', ')}
 `).join('\n')}
 
 Return ONLY valid JSON:
 {
   "results": [
-    {"correct": true, "feedback": "Good understanding shown"},
-    {"correct": false, "feedback": "Missing key concept: X"}
+    {"score": 1.0, "feedback": "Perfect! You got it"},
+    {"score": 0.7, "feedback": "Good grasp! Just missing X"}
   ]
 }
 `;
@@ -189,25 +196,29 @@ Return ONLY valid JSON:
       let cleanJson = jsonMatch[0].replace(/,(\s*[}\]])/g, '$1').replace(/\n/g, ' ').replace(/\s+/g, ' ');
       const evalData = JSON.parse(cleanJson);
 
-      // Calculate score
-      const correctCount = evalData.results.filter(r => r.correct).length;
-      const score = Math.round((correctCount / questions.length) * 100);
+      // Calculate score using soft scoring (0.0-1.0 per question)
+      const totalScore = evalData.results.reduce((sum, r) => sum + (r.score || 0), 0);
+      const score = Math.round((totalScore / questions.length) * 100);
       const passed = score >= this.minimumPassScore;
+
+      // Count how many questions had good understanding (>= 0.6)
+      const goodUnderstanding = evalData.results.filter(r => r.score >= 0.6).length;
 
       return {
         score: score,
         passed: passed,
-        correctCount: correctCount,
+        correctCount: goodUnderstanding,
         totalQuestions: questions.length,
         results: evalData.results.map((r, i) => ({
           questionId: i + 1,
-          correct: r.correct,
+          score: r.score,
+          correct: r.score >= 0.6, // For backwards compatibility
           userAnswer: userAnswers[i],
           feedback: r.feedback
         })),
         message: passed
-          ? '🎉 Great! You grasped it. Here\'s your paraphrase.'
-          : `📚 Score: ${score}%. Review and try again. Need ${this.minimumPassScore}% to unlock.`
+          ? score >= 90 ? '🎉 Excellent! You really grasped it!' : '😊 Nice! You got it. Here\'s your paraphrase.'
+          : `💪 Score: ${score}%. You're close! Review the feedback and try again. Need ${this.minimumPassScore}% to unlock.`
       };
 
     } catch (error) {
@@ -315,36 +326,53 @@ Return ONLY valid JSON:
   }
 
   /**
-   * Fallback evaluation using keyword matching
+   * Fallback evaluation using keyword matching (with soft scoring)
    */
   evaluateFallback(questions, userAnswers) {
-    let correctCount = 0;
-
     const results = questions.map((q, i) => {
       const answer = (userAnswers[i] || '').toLowerCase();
-      const hasKeywords = q.keywords.some(kw => answer.includes(kw.toLowerCase()));
+      const keywords = q.keywords.map(kw => kw.toLowerCase());
+      const matchedKeywords = keywords.filter(kw => answer.includes(kw));
 
-      if (hasKeywords) correctCount++;
+      // Soft scoring based on keyword matches
+      let score = 0;
+      if (!answer || answer === 'no answer') {
+        score = 0.0;
+      } else if (matchedKeywords.length === keywords.length) {
+        score = 1.0; // All keywords present
+      } else if (matchedKeywords.length >= keywords.length / 2) {
+        score = 0.7; // Most keywords present
+      } else if (matchedKeywords.length > 0) {
+        score = 0.5; // Some keywords present
+      } else if (answer.length > 10) {
+        score = 0.3; // Attempted answer, no keywords
+      }
 
       return {
         questionId: q.id,
-        correct: hasKeywords,
+        score: score,
+        correct: score >= 0.6,
         userAnswer: userAnswers[i],
-        feedback: hasKeywords ? 'Good!' : 'Try to include key concepts'
+        feedback: score >= 0.9 ? 'Perfect!' :
+                  score >= 0.6 ? 'Good grasp!' :
+                  score >= 0.4 ? 'You\'re getting there! Try to include key concepts.' :
+                  'Include key concepts from the text'
       };
     });
 
-    const score = Math.round((correctCount / questions.length) * 100);
+    const totalScore = results.reduce((sum, r) => sum + r.score, 0);
+    const score = Math.round((totalScore / questions.length) * 100);
+    const goodUnderstanding = results.filter(r => r.score >= 0.6).length;
 
     return {
       score: score,
       passed: score >= this.minimumPassScore,
-      correctCount: correctCount,
+      correctCount: goodUnderstanding,
       totalQuestions: questions.length,
       results: results,
       message: score >= this.minimumPassScore
-        ? '🎉 You grasped it!'
-        : `Score: ${score}%. Try again!`
+        ? score >= 90 ? '🎉 Excellent! You really grasped it!' : '😊 Nice! You got it. Here\'s your paraphrase.'
+        : `💪 Score: ${score}%. You're close! Review the feedback and try again. Need ${this.minimumPassScore}% to unlock.`
     };
   }
 
