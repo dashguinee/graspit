@@ -1,14 +1,15 @@
 /**
  * Graspit Backend Server
  *
- * Connects paraphrase engine + quiz generator
+ * LLM-POWERED with DeepSeek API
  * Flow: Submit text → Get quiz → Pass quiz → Get paraphrase
  */
 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const ParaphraseEngine = require('./paraphrase-engine');
-const QuizGenerator = require('./quiz-generator');
+const LLMParaphraser = require('./llm-paraphraser');
+const LLMQuizGenerator = require('./llm-quiz-generator');
 
 const app = express();
 const PORT = 3100;
@@ -18,18 +19,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
 
-// Initialize engines
-const paraphraser = new ParaphraseEngine();
-const quizGen = new QuizGenerator();
+// Initialize LLM engines with DeepSeek API
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-99b64a1c8d5a4b229335f315f28a50b1';
+const paraphraser = new LLMParaphraser(DEEPSEEK_API_KEY);
+const quizGen = new LLMQuizGenerator(DEEPSEEK_API_KEY);
 
 // Store sessions temporarily (would use DB in production)
 const sessions = new Map();
 
 /**
  * POST /api/analyze
- * Step 1: Submit text, get quiz
+ * Step 1: Submit text, get LLM-generated quiz
  */
-app.post('/api/analyze', (req, res) => {
+app.post('/api/analyze', async (req, res) => {
   try {
     const { text } = req.body;
 
@@ -39,8 +41,8 @@ app.post('/api/analyze', (req, res) => {
       });
     }
 
-    // Generate quiz
-    const quiz = quizGen.generateQuiz(text);
+    // Generate quiz using LLM
+    const quiz = await quizGen.generateQuiz(text);
 
     // Estimate AI score before paraphrase
     const originalScore = paraphraser.estimateAIScore(text);
@@ -64,15 +66,15 @@ app.post('/api/analyze', (req, res) => {
 
   } catch (error) {
     console.error('Error in /api/analyze:', error);
-    res.status(500).json({ error: 'Analysis failed' });
+    res.status(500).json({ error: 'Analysis failed: ' + error.message });
   }
 });
 
 /**
  * POST /api/submit-quiz
- * Step 2: Submit quiz answers, get flash summary + paraphrase if passed
+ * Step 2: Submit quiz answers, get LLM evaluation + flash summary + paraphrase if passed
  */
-app.post('/api/submit-quiz', (req, res) => {
+app.post('/api/submit-quiz', async (req, res) => {
   try {
     const { sessionId, answers } = req.body;
 
@@ -81,19 +83,19 @@ app.post('/api/submit-quiz', (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    // Evaluate answers
-    const evaluation = quizGen.evaluateAnswers(session.quiz.questions, answers);
+    // Evaluate answers using LLM
+    const evaluation = await quizGen.evaluateAnswers(session.quiz.questions, answers);
 
     // Update session
     session.quizPassed = evaluation.passed;
     session.quizScore = evaluation.score;
 
     if (evaluation.passed) {
-      // Generate flash summary
-      const flashSummary = quizGen.generateFlashSummary(session.originalText);
+      // Generate flash summary using LLM
+      const flashSummary = await quizGen.generateFlashSummary(session.originalText);
 
-      // Generate paraphrase IMMEDIATELY
-      const paraphrased = paraphraser.paraphrase(session.originalText);
+      // Generate paraphrase using LLM with ZION's knowledge
+      const paraphrased = await paraphraser.paraphrase(session.originalText);
       const newScore = paraphraser.estimateAIScore(paraphrased);
 
       // Store in session
@@ -135,7 +137,7 @@ app.post('/api/submit-quiz', (req, res) => {
 
   } catch (error) {
     console.error('Error in /api/submit-quiz:', error);
-    res.status(500).json({ error: 'Quiz submission failed' });
+    res.status(500).json({ error: 'Quiz submission failed: ' + error.message });
   }
 });
 
