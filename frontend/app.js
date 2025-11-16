@@ -27,7 +27,7 @@ async function analyzeText() {
     return;
   }
 
-  showLoading(true);
+  showLoading(true, '🎯 Analyzing text & generating quiz...');
 
   try {
     const response = await fetch(`${API_URL}/analyze`, {
@@ -106,7 +106,7 @@ async function submitQuiz() {
     return;
   }
 
-  showLoading(true);
+  showLoading(true, '✨ Evaluating answers & humanizing text...');
 
   try {
     const response = await fetch(`${API_URL}/submit-quiz`, {
@@ -128,13 +128,16 @@ async function submitQuiz() {
     // Show results
     displayQuizResults(data);
 
-    // If passed, get paraphrase
-    if (data.passed) {
-      await getParaphrase();
-    }
+    // Paraphrase is already included in response when passed
+    // No need to call getParaphrase() separately
 
   } catch (error) {
-    showError(error.message);
+    // Check for session expiration
+    if (error.message.includes('expired') || error.message.includes('not found')) {
+      showPersistentError('⚠️ Session expired. Please start over with new text.', () => startOver());
+    } else {
+      showError(error.message);
+    }
   } finally {
     showLoading(false);
   }
@@ -157,8 +160,18 @@ function displayQuizResults(results) {
     // Move to results page
     showStep('step3');
   } else {
-    // Quiz failed - show error and let them try again
-    showError(`Quiz not passed (${results.score}%). ${results.feedback || 'Try answering with more detail about the key concepts.'}`);
+    // Quiz failed - show detailed feedback with retry option
+    const message = results.message || `Score: ${results.score}%. Need ${results.passScore || 60}% to pass.`;
+    const feedbackHtml = results.results ? results.results.map(r =>
+      `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+        <strong>Q${r.questionId}:</strong> ${r.feedback} ${r.correct ? '✅' : '❌'}
+      </div>`
+    ).join('') : '';
+
+    showPersistentError(
+      `❌ ${message}<br><br>${feedbackHtml}<br>Review the feedback and try again!`,
+      resetQuiz
+    );
   }
 }
 
@@ -305,11 +318,16 @@ function showStep(stepId) {
 }
 
 /**
- * Show/hide loading overlay
+ * Show/hide loading overlay with custom message
  */
-function showLoading(show) {
+function showLoading(show, message = 'Processing...') {
   const loading = document.getElementById('loading');
   if (show) {
+    // Update loading message
+    const loadingText = loading.querySelector('p');
+    if (loadingText) {
+      loadingText.textContent = message;
+    }
     loading.classList.add('active');
   } else {
     loading.classList.remove('active');
@@ -317,7 +335,7 @@ function showLoading(show) {
 }
 
 /**
- * Show error message
+ * Show error message (auto-dismiss after 5s)
  */
 function showError(message) {
   const errorDiv = document.getElementById('error');
@@ -327,6 +345,22 @@ function showError(message) {
   setTimeout(() => {
     errorDiv.classList.remove('active');
   }, 5000);
+}
+
+/**
+ * Show persistent error with action button
+ */
+function showPersistentError(message, action) {
+  const errorDiv = document.getElementById('error');
+  errorDiv.innerHTML = `
+    ${message}
+    <button onclick="this.parentElement.classList.remove('active'); ${action ? action.name + '()' : ''}"
+            style="margin-left: 10px; padding: 5px 15px; background: #fff; color: #d32f2f; border: 1px solid #fff; border-radius: 4px; cursor: pointer;">
+      Start Over
+    </button>
+  `;
+  errorDiv.classList.add('active');
+  // Don't auto-dismiss persistent errors
 }
 
 // Initialize
