@@ -140,66 +140,114 @@ async function submitQuiz() {
 }
 
 /**
- * Display quiz results
+ * Display quiz results, flash summary, and paraphrase
  */
 function displayQuizResults(results) {
-  const container = document.getElementById('quizResults');
-  container.className = results.passed ? 'passed' : 'failed';
+  if (results.passed) {
+    // Show flash summary
+    displayFlashSummary(results.flashSummary);
 
-  let html = `
-    <h3>${results.passed ? '✅ Quiz Passed!' : '❌ Quiz Not Passed'}</h3>
-    <p>Score: ${results.score}% (${results.correctCount}/${results.totalQuestions} correct)</p>
-    <p>${results.message}</p>
-  `;
+    // Display paraphrase
+    displayParaphrase(results.paraphrase);
 
-  if (!results.passed) {
-    html += '<button onclick="resetQuiz()" class="btn-secondary">Try Again</button>';
+    // Start countdown timer
+    startCountdown(results.payment.timeRemaining);
+
+    // Move to results page
+    showStep('step3');
+  } else {
+    // Quiz failed
+    const container = document.getElementById('quizResults');
+    container.className = 'failed';
+    container.innerHTML = `
+      <h3>❌ Quiz Not Passed</h3>
+      <p>Score: ${results.score}% (${results.correctCount}/${results.totalQuestions} correct)</p>
+      <p>${results.message}</p>
+      <button onclick="resetQuiz()" class="btn-secondary">Try Again</button>
+    `;
   }
-
-  container.innerHTML = html;
 }
 
 /**
- * Step 3: Get paraphrase (if quiz passed)
+ * Display flash summary of key learnings
  */
-async function getParaphrase() {
-  if (!currentSessionId) {
-    showError('No active session');
-    return;
+function displayFlashSummary(summary) {
+  const container = document.getElementById('flashSummary');
+
+  const keyPoints = summary.keyPoints.map(point => `<li>${point}</li>`).join('');
+
+  container.innerHTML = `
+    <h3>📖 Key Points You Should Remember:</h3>
+    <ul>${keyPoints}</ul>
+    <div class="keywords">
+      <strong>Keywords:</strong> ${summary.keywords}
+    </div>
+    <div class="keywords">
+      <strong>Reading time:</strong> ~${summary.readingTime} min | <strong>Word count:</strong> ${summary.wordCount}
+    </div>
+  `;
+}
+
+/**
+ * Display paraphrase results
+ */
+function displayParaphrase(paraphrase) {
+  document.getElementById('originalText').textContent = paraphrase.original;
+  document.getElementById('paraphrasedText').textContent = paraphrase.humanized;
+  document.getElementById('originalScore').textContent = paraphrase.originalScore;
+  document.getElementById('newScore').textContent = paraphrase.newScore;
+  document.getElementById('improvement').textContent = paraphrase.improvement;
+}
+
+/**
+ * Start 30-minute countdown timer
+ */
+let countdownInterval = null;
+
+function startCountdown(seconds) {
+  let remaining = seconds;
+
+  // Clear any existing interval
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
   }
 
-  showLoading(true);
+  // Update immediately
+  updateCountdownDisplay(remaining);
 
-  try {
-    const response = await fetch(`${API_URL}/paraphrase`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: currentSessionId })
-    });
+  // Update every second
+  countdownInterval = setInterval(() => {
+    remaining--;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Paraphrase failed');
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+      document.getElementById('countdown').textContent = '⏰ TIME\'S UP!';
+      document.getElementById('countdown').style.color = '#d32f2f';
+    } else {
+      updateCountdownDisplay(remaining);
     }
+  }, 1000);
+}
 
-    const data = await response.json();
+/**
+ * Update countdown display
+ */
+function updateCountdownDisplay(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
 
-    // Display results
-    document.getElementById('originalText').textContent = data.original;
-    document.getElementById('paraphrasedText').textContent = data.paraphrased;
-    document.getElementById('originalScore').textContent = data.originalScore;
-    document.getElementById('newScore').textContent = data.newScore;
-    document.getElementById('improvement').textContent = data.improvement;
+  document.getElementById('countdown').textContent = display;
 
-    // Move to step 3
-    showStep('step3');
-
-  } catch (error) {
-    showError(error.message);
-  } finally {
-    showLoading(false);
+  // Change color when time is running low
+  if (seconds < 300) { // Less than 5 minutes
+    document.getElementById('countdown').style.color = '#d32f2f';
+  } else if (seconds < 600) { // Less than 10 minutes
+    document.getElementById('countdown').style.color = '#ff6f00';
   }
 }
+
+// getParaphrase function removed - paraphrase happens automatically after quiz now
 
 /**
  * Copy paraphrased text to clipboard
@@ -239,6 +287,12 @@ function resetQuiz() {
  * Start over with new text
  */
 function startOver() {
+  // Clear countdown timer
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
   currentSessionId = null;
   currentQuiz = null;
   document.getElementById('inputText').value = '';

@@ -70,7 +70,7 @@ app.post('/api/analyze', (req, res) => {
 
 /**
  * POST /api/submit-quiz
- * Step 2: Submit quiz answers, get results
+ * Step 2: Submit quiz answers, get flash summary + paraphrase if passed
  */
 app.post('/api/submit-quiz', (req, res) => {
   try {
@@ -87,12 +87,51 @@ app.post('/api/submit-quiz', (req, res) => {
     // Update session
     session.quizPassed = evaluation.passed;
     session.quizScore = evaluation.score;
-    sessions.set(sessionId, session);
 
-    res.json({
-      ...evaluation,
-      canGetParaphrase: evaluation.passed
-    });
+    if (evaluation.passed) {
+      // Generate flash summary
+      const flashSummary = quizGen.generateFlashSummary(session.originalText);
+
+      // Generate paraphrase IMMEDIATELY
+      const paraphrased = paraphraser.paraphrase(session.originalText);
+      const newScore = paraphraser.estimateAIScore(paraphrased);
+
+      // Store in session
+      session.paraphrased = paraphrased;
+      session.newScore = newScore;
+      session.flashSummary = flashSummary;
+      session.paymentDeadline = Date.now() + (30 * 60 * 1000); // 30 minutes from now
+
+      sessions.set(sessionId, session);
+
+      // Return everything!
+      res.json({
+        ...evaluation,
+        flashSummary: flashSummary,
+        paraphrase: {
+          original: session.originalText,
+          humanized: paraphrased,
+          originalScore: session.originalScore,
+          newScore: newScore,
+          improvement: session.originalScore - newScore
+        },
+        payment: {
+          deadline: session.paymentDeadline,
+          timeRemaining: 30 * 60, // 30 minutes in seconds
+          amount: 'RM10',
+          instagram: '@dashaziz_',
+          message: '🎉 You got it! Now pay RM10 within 30 minutes'
+        }
+      });
+    } else {
+      // Quiz failed - no paraphrase
+      sessions.set(sessionId, session);
+
+      res.json({
+        ...evaluation,
+        canRetry: true
+      });
+    }
 
   } catch (error) {
     console.error('Error in /api/submit-quiz:', error);

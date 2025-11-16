@@ -41,11 +41,13 @@
       </div>
     </section>
 
-    <!-- Step 3: Get Paraphrase -->
+    <!-- Step 3: Flash Summary + Results -->
     <section id="step3" class="step">
-      <h2>Step 3: Your Human-Like Version 🎉</h2>
+      <h2>📚 Flash Summary - What You Just Learned</h2>
 
-      <div id="quizResults"></div>
+      <div id="flashSummary" class="flash-summary"></div>
+
+      <h2 style="margin-top: 30px;">🎉 Your Humanized Version is Ready!</h2>
 
       <div class="comparison">
         <div class="text-box">
@@ -54,7 +56,7 @@
         </div>
 
         <div class="text-box success">
-          <h3>Paraphrased (AI: <span id="newScore">--</span>%)</h3>
+          <h3>Humanized (AI: <span id="newScore">--</span>%)</h3>
           <p id="paraphrasedText"></p>
           <button onclick="copyParaphrase()" class="btn-copy">📋 Copy</button>
         </div>
@@ -64,7 +66,32 @@
         <p>Improvement: <strong id="improvement">--</strong>% less AI-like!</p>
       </div>
 
-      <button onclick="startOver()" class="btn-secondary">Analyze New Text</button>
+      <!-- Payment Section -->
+      <div class="payment-section">
+        <h2>💰 Now Pay RM10 Within <span id="countdown">30:00</span></h2>
+        <p class="payment-warning">⚠️ Pay within 30 minutes or we might just accidentally flag you to the institution 🤣<br>(jk... but seriously, pay up! 💰)</p>
+
+        <div class="payment-options">
+          <div class="payment-option">
+            <h3>📱 Option 1: DM Instagram</h3>
+            <p>Send payment screenshot to:</p>
+            <a href="https://instagram.com/dashaziz_" target="_blank" class="btn-instagram">
+              @dashaziz_ on Instagram 📸
+            </a>
+          </div>
+
+          <div class="payment-option">
+            <h3>💳 Option 2: QR Code</h3>
+            <p>Scan & pay RM10, then DM proof</p>
+            <div class="qr-placeholder">
+              <p>QR Code Coming Soon!</p>
+              <p style="font-size: 0.9rem;">For now, DM Instagram 👆</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="startOver()" class="btn-secondary" style="margin-top: 30px;">Analyze New Text</button>
     </section>
 
     <!-- Loading Overlay -->

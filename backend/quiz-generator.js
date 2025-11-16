@@ -27,26 +27,25 @@ class QuizGenerator {
 
   /**
    * Extract key concepts from text
-   * Looks for: definitions, statistics, main arguments, examples
+   * Looks for: main ideas, definitions, arguments, themes
    */
   extractKeyConcepts(text) {
     const concepts = [];
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
 
-    // Extract sentences with statistics (numbers + %)
-    const statPattern = /([^.!?]*\d+[%]?[^.!?]*)[.!?]/g;
-    let match;
-    while ((match = statPattern.exec(text)) !== null) {
+    // Get main topic/theme (first substantial sentence)
+    if (sentences.length > 0) {
       concepts.push({
-        type: 'statistic',
-        content: match[1].trim(),
-        question: this.generateStatQuestion(match[1].trim())
+        type: 'main-idea',
+        content: sentences[0].trim(),
+        question: this.generateMainIdeaQuestion(sentences[0].trim())
       });
     }
 
     // Extract definitions (X is Y, X refers to Y)
-    const defPattern = /([^.!?]*(?:is|refers to|means|called)[^.!?]*)[.!?]/gi;
+    const defPattern = /([^.!?]*(?:is|are|refers to|means|called|defined as)[^.!?]*)[.!?]/gi;
     const defMatches = text.match(defPattern);
-    if (defMatches) {
+    if (defMatches && defMatches.length > 0) {
       defMatches.slice(0, 2).forEach(def => {
         concepts.push({
           type: 'definition',
@@ -56,10 +55,10 @@ class QuizGenerator {
       });
     }
 
-    // Extract main arguments (sentences with "because", "therefore", "thus")
-    const argPattern = /([^.!?]*(?:because|therefore|thus|since)[^.!?]*)[.!?]/gi;
+    // Extract key arguments/reasons
+    const argPattern = /([^.!?]*(?:because|therefore|thus|since|however|moreover)[^.!?]*)[.!?]/gi;
     const argMatches = text.match(argPattern);
-    if (argMatches) {
+    if (argMatches && argMatches.length > 0) {
       argMatches.slice(0, 2).forEach(arg => {
         concepts.push({
           type: 'argument',
@@ -69,24 +68,27 @@ class QuizGenerator {
       });
     }
 
+    // Add a general comprehension question
+    if (sentences.length >= 3) {
+      const middleSentence = sentences[Math.floor(sentences.length / 2)];
+      concepts.push({
+        type: 'comprehension',
+        content: middleSentence.trim(),
+        question: this.generateComprehensionQuestion(text)
+      });
+    }
+
     return concepts.slice(0, 5); // Max 5 questions
   }
 
   /**
-   * Generate statistic question
+   * Generate main idea question
    */
-  generateStatQuestion(stat) {
-    // Extract the number
-    const numberMatch = stat.match(/(\d+[%]?)/);
-    const number = numberMatch ? numberMatch[1] : '';
-
-    // Extract the context (what the stat is about)
-    const context = stat.replace(/\d+[%]?/, '[NUMBER]');
-
+  generateMainIdeaQuestion(sentence) {
     return {
-      text: `According to the text, what percentage/number relates to: ${this.simplifyContext(context)}?`,
-      correctAnswer: number,
-      type: 'fill-in'
+      text: `What is the main topic or focus of this text?`,
+      correctAnswer: this.extractKeywords(sentence),
+      type: 'short-answer'
     };
   }
 
@@ -110,13 +112,23 @@ class QuizGenerator {
    * Generate argument question
    */
   generateArgQuestion(argument) {
-    // Extract the cause and effect
-    const causePart = argument.split(/because|since/i)[1] || argument;
-    const effectPart = argument.split(/therefore|thus/i)[1] || argument;
+    return {
+      text: `Explain the main point or reasoning in your own words.`,
+      correctAnswer: this.extractKeywords(argument),
+      type: 'comprehension'
+    };
+  }
+
+  /**
+   * Generate general comprehension question
+   */
+  generateComprehensionQuestion(fullText) {
+    // Extract a few key themes
+    const keywords = this.extractKeywords(fullText);
 
     return {
-      text: `Explain the main point made in this statement: "${this.simplify(argument)}"`,
-      correctAnswer: this.extractKeywords(argument),
+      text: `In one sentence, what is this text primarily about?`,
+      correctAnswer: keywords,
       type: 'comprehension'
     };
   }
@@ -221,6 +233,63 @@ class QuizGenerator {
    */
   simplify(text) {
     return text.length > 80 ? text.substring(0, 80) + '...' : text;
+  }
+
+  /**
+   * Generate flash summary of key learnings
+   * Shows condensed understanding after quiz
+   */
+  generateFlashSummary(text) {
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
+    const keywords = this.extractKeywords(text);
+
+    // Extract 3-5 key points
+    const keyPoints = [];
+
+    // First sentence (topic)
+    if (sentences.length > 0) {
+      keyPoints.push(this.condense(sentences[0]));
+    }
+
+    // Middle sentences (main content)
+    if (sentences.length >= 3) {
+      const mid1 = Math.floor(sentences.length / 3);
+      const mid2 = Math.floor((sentences.length * 2) / 3);
+      keyPoints.push(this.condense(sentences[mid1]));
+      keyPoints.push(this.condense(sentences[mid2]));
+    }
+
+    // Last sentence (conclusion/result)
+    if (sentences.length > 1) {
+      keyPoints.push(this.condense(sentences[sentences.length - 1]));
+    }
+
+    return {
+      keyPoints: keyPoints.filter(p => p.length > 10).slice(0, 5),
+      keywords: keywords.split(' ').slice(0, 8).join(', '),
+      wordCount: text.split(/\s+/).length,
+      readingTime: Math.ceil(text.split(/\s+/).length / 200) // ~200 words/min
+    };
+  }
+
+  /**
+   * Condense a sentence to its core meaning
+   */
+  condense(sentence) {
+    // Remove filler words and keep core meaning
+    const fillerWords = ['very', 'really', 'quite', 'just', 'actually', 'basically', 'literally'];
+    let condensed = sentence.trim();
+
+    fillerWords.forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      condensed = condensed.replace(regex, '');
+    });
+
+    // Clean up extra spaces
+    condensed = condensed.replace(/\s+/g, ' ').trim();
+
+    // Limit length
+    return condensed.length > 100 ? condensed.substring(0, 100) + '...' : condensed;
   }
 }
 
