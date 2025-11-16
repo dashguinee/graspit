@@ -17,6 +17,10 @@ class GeminiQuizGenerator {
    * Generate smart quiz using Gemini
    */
   async generateQuiz(text) {
+    console.log('[QUIZ] Starting quiz generation...');
+    console.log('[QUIZ] Text length:', text.length);
+    console.log('[QUIZ] API URL:', this.apiUrl.substring(0, 100) + '...');
+
     const prompt = `
 You are a quiz generator. Read this text and create 2 comprehension questions that test true understanding.
 
@@ -42,6 +46,7 @@ Return ONLY valid JSON in this exact format:
 `;
 
     try {
+      console.log('[QUIZ] Calling Gemini API...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
