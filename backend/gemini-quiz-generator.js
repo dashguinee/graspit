@@ -3,6 +3,8 @@
  * Uses Google Gemini API (FREE!) for SMART comprehension questions
  */
 
+const fetch = require('node-fetch');
+
 class GeminiQuizGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey;

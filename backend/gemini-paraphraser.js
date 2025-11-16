@@ -3,6 +3,8 @@
  * Encodes ZION's AI detection knowledge into Google Gemini (FREE!)
  */
 
+const fetch = require('node-fetch');
+
 class GeminiParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
