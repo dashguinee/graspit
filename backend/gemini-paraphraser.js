@@ -3,7 +3,8 @@
  * Encodes ZION's AI detection knowledge into Google Gemini (FREE!)
  */
 
-const fetch = require('node-fetch');
+// Use native fetch (Node 18+) or node-fetch as fallback
+const fetch = globalThis.fetch || require('node-fetch');
 
 class GeminiParaphraser {
   constructor(apiKey) {

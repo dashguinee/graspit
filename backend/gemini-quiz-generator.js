@@ -3,7 +3,8 @@
  * Uses Google Gemini API (FREE!) for SMART comprehension questions
  */
 
-const fetch = require('node-fetch');
+// Use native fetch (Node 18+) or node-fetch as fallback
+const fetch = globalThis.fetch || require('node-fetch');
 
 class GeminiQuizGenerator {
   constructor(apiKey) {
@@ -17,7 +18,7 @@ class GeminiQuizGenerator {
    */
   async generateQuiz(text) {
     const prompt = `
-You are a quiz generator. Read this text and create 5 comprehension questions that test true understanding.
+You are a quiz generator. Read this text and create 2 comprehension questions that test true understanding.
 
 TEXT:
 ${text}
