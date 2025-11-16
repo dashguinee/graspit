@@ -1,15 +1,14 @@
 /**
- * Gemini-Powered Paraphraser
- * Encodes ZION's AI detection knowledge into Google Gemini (FREE!)
+ * DeepSeek-Powered Paraphraser
+ * Alternative to Gemini with ZION's AI detection knowledge
  */
 
-// Use native fetch (Node 18+) or node-fetch as fallback
 const fetch = globalThis.fetch || require('node-fetch');
 
-class GeminiParaphraser {
+class DeepSeekParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
 
     // ZION's knowledge encoded as system instruction
     this.systemInstruction = `You are an expert at humanizing AI-generated text to pass AI detection.
@@ -78,62 +77,64 @@ Return ONLY the humanized text, nothing else.`;
   }
 
   /**
-   * Paraphrase text using Gemini with ZION's knowledge
+   * Paraphrase text using DeepSeek with ZION's knowledge
    */
   async paraphrase(text) {
-    console.log('[PARAPHRASER] Starting paraphrase...');
+    console.log('[DEEPSEEK] Starting paraphrase...');
     try {
-      console.log('[PARAPHRASER] Calling Gemini API...');
+      console.log('[DEEPSEEK] Calling DeepSeek API...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `${this.systemInstruction}\n\nHumanize this text:\n\n${text}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.4,  // Lowered from 0.7 for consistency
-            maxOutputTokens: 2000
-          }
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: this.systemInstruction
+            },
+            {
+              role: 'user',
+              content: `Humanize this text:\n\n${text}`
+            }
+          ],
+          temperature: 0.3,  // Low for consistency
+          max_tokens: 2000
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
+        throw new Error(`DeepSeek API error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('[PARAPHRASER] Got response from Gemini');
+      console.log('[DEEPSEEK] Got response from DeepSeek');
 
-      const candidate = data.candidates[0];
-      const paraphrased = candidate.content.parts[0].text.trim();
-      const finishReason = candidate.finishReason;
+      const paraphrased = data.choices[0].message.content.trim();
+      const finishReason = data.choices[0].finish_reason;
 
-      console.log('[PARAPHRASER] Paraphrase complete');
-      console.log('[PARAPHRASER] Length:', paraphrased.length);
-      console.log('[PARAPHRASER] Finish reason:', finishReason);
+      console.log('[DEEPSEEK] Paraphrase complete');
+      console.log('[DEEPSEEK] Length:', paraphrased.length);
+      console.log('[DEEPSEEK] Finish reason:', finishReason);
 
-      if (finishReason === 'MAX_TOKENS') {
-        console.warn('[PARAPHRASER] WARNING: Response truncated due to MAX_TOKENS');
+      if (finishReason === 'length') {
+        console.warn('[DEEPSEEK] WARNING: Response truncated due to max_tokens');
       }
 
       return paraphrased;
 
     } catch (error) {
-      console.error('[PARAPHRASER] ERROR:', error.message);
-      console.error('[PARAPHRASER] Falling back to rule-based');
-      // Fallback to rule-based if LLM fails
-      return this.fallbackParaphrase(text);
+      console.error('[DEEPSEEK] ERROR:', error.message);
+      throw error; // Don't fallback, let caller handle
     }
   }
 
   /**
-   * Estimate AI detection score
+   * Estimate AI detection score (same as Gemini)
    */
   estimateAIScore(text) {
     let score = 0;
@@ -169,35 +170,6 @@ Return ONLY the humanized text, nothing else.`;
 
     return Math.min(score, 100); // Cap at 100%
   }
-
-  /**
-   * Fallback to rule-based paraphrasing if LLM fails
-   */
-  fallbackParaphrase(text) {
-    let result = text;
-
-    // Remove em-dashes
-    result = result.replace(/—([^—]+)—/g, '. $1.');
-    result = result.replace(/—/g, '. ');
-
-    // Remove semicolons
-    result = result.replace(/;/g, '.');
-
-    // Casualize some verbs
-    const replacements = {
-      'developed': 'built',
-      'demonstrates': 'shows',
-      'utilized': 'used'
-    };
-
-    Object.keys(replacements).forEach(formal => {
-      const casual = replacements[formal];
-      const regex = new RegExp(`\\b${formal}\\b`, 'gi');
-      result = result.replace(regex, casual);
-    });
-
-    return result.trim();
-  }
 }
 
-module.exports = GeminiParaphraser;
+module.exports = DeepSeekParaphraser;

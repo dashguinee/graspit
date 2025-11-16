@@ -8,7 +8,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const GeminiParaphraser = require('./gemini-paraphraser');
+const MultiLLMParaphraser = require('./multi-llm-paraphraser');
 const GeminiQuizGenerator = require('./gemini-quiz-generator');
 
 const app = express();
@@ -19,9 +19,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
 
-// Initialize LLM engines with Google Gemini API (FREE!)
+// Initialize LLM engines - MULTI-LLM system for bulletproof paraphrasing!
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyAZffegve-8w0WQo2AXDotvQrVbdmo0pEM';
-const paraphraser = new GeminiParaphraser(GEMINI_API_KEY);
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-99b64a1c8d5a4b229335f315f28a50b1';
+const paraphraser = new MultiLLMParaphraser(GEMINI_API_KEY, DEEPSEEK_API_KEY);
 const quizGen = new GeminiQuizGenerator(GEMINI_API_KEY);
 
 // Store sessions temporarily (would use DB in production)
