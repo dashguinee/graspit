@@ -157,15 +157,8 @@ function displayQuizResults(results) {
     // Move to results page
     showStep('step3');
   } else {
-    // Quiz failed
-    const container = document.getElementById('quizResults');
-    container.className = 'failed';
-    container.innerHTML = `
-      <h3>❌ Quiz Not Passed</h3>
-      <p>Score: ${results.score}% (${results.correctCount}/${results.totalQuestions} correct)</p>
-      <p>${results.message}</p>
-      <button onclick="resetQuiz()" class="btn-secondary">Try Again</button>
-    `;
+    // Quiz failed - show error and let them try again
+    showError(`Quiz not passed (${results.score}%). ${results.feedback || 'Try answering with more detail about the key concepts.'}`);
   }
 }
 
