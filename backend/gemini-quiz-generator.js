@@ -60,19 +60,40 @@ Return ONLY valid JSON in this exact format:
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error response:', errorText);
         throw new Error(`Gemini API error: ${response.statusText}`);
       }
 
       const data = await response.json();
+
+      // Safety check
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
+        throw new Error('Unexpected response from Gemini');
+      }
+
       const content = data.candidates[0].content.parts[0].text;
 
-      // Parse JSON from response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      // Parse JSON from response (remove markdown code blocks if present)
+      let jsonText = content;
+
+      // Remove markdown code blocks (```json ... ```)
+      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+      // Extract JSON object
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('Could not parse quiz JSON from Gemini response');
       }
 
-      const quizData = JSON.parse(jsonMatch[0]);
+      // Clean up the JSON (remove trailing commas before } or ])
+      let cleanJson = jsonMatch[0]
+        .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
+        .replace(/\n/g, ' ')             // Remove newlines
+        .replace(/\s+/g, ' ');           // Normalize whitespace
+
+      const quizData = JSON.parse(cleanJson);
 
       return {
         questions: quizData.questions.map((q, i) => ({
@@ -135,19 +156,30 @@ Return ONLY valid JSON:
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error response:', errorText);
         throw new Error(`Gemini API error: ${response.statusText}`);
       }
 
       const data = await response.json();
+
+      // Safety check
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
+        throw new Error('Unexpected response from Gemini');
+      }
+
       const content = data.candidates[0].content.parts[0].text;
 
-      // Parse JSON
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      // Parse JSON (remove markdown code blocks if present)
+      let jsonText = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('Could not parse evaluation JSON');
       }
 
-      const evalData = JSON.parse(jsonMatch[0]);
+      let cleanJson = jsonMatch[0].replace(/,(\s*[}\]])/g, '$1').replace(/\n/g, ' ').replace(/\s+/g, ' ');
+      const evalData = JSON.parse(cleanJson);
 
       // Calculate score
       const correctCount = evalData.results.filter(r => r.correct).length;
@@ -214,18 +246,29 @@ Return ONLY valid JSON:
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error response:', errorText);
         throw new Error(`Gemini API error: ${response.statusText}`);
       }
 
       const data = await response.json();
+
+      // Safety check
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        console.error('Unexpected Gemini response structure:', JSON.stringify(data));
+        throw new Error('Unexpected response from Gemini');
+      }
+
       const content = data.candidates[0].content.parts[0].text;
 
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let jsonText = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('Could not parse summary JSON');
       }
 
-      const summaryData = JSON.parse(jsonMatch[0]);
+      let cleanJson = jsonMatch[0].replace(/,(\s*[}\]])/g, '$1').replace(/\n/g, ' ').replace(/\s+/g, ' ');
+      const summaryData = JSON.parse(cleanJson);
 
       return {
         keyPoints: summaryData.keyPoints,
