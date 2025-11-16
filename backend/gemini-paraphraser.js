@@ -14,6 +14,8 @@ class GeminiParaphraser {
     // ZION's knowledge encoded as system instruction
     this.systemInstruction = `You are an expert at humanizing AI-generated text to pass AI detection.
 
+IMPORTANT: Output the COMPLETE humanized version of ALL the text provided. Do not truncate or stop mid-sentence.
+
 CRITICAL RULES (from proven 92% → 31% → <10% research):
 
 1. REMOVE ALL EM-DASHES (biggest AI killer!)
@@ -107,8 +109,18 @@ Return ONLY the humanized text, nothing else.`;
 
       const data = await response.json();
       console.log('[PARAPHRASER] Got response from Gemini');
-      const paraphrased = data.candidates[0].content.parts[0].text.trim();
-      console.log('[PARAPHRASER] Paraphrase complete, length:', paraphrased.length);
+
+      const candidate = data.candidates[0];
+      const paraphrased = candidate.content.parts[0].text.trim();
+      const finishReason = candidate.finishReason;
+
+      console.log('[PARAPHRASER] Paraphrase complete');
+      console.log('[PARAPHRASER] Length:', paraphrased.length);
+      console.log('[PARAPHRASER] Finish reason:', finishReason);
+
+      if (finishReason === 'MAX_TOKENS') {
+        console.warn('[PARAPHRASER] WARNING: Response truncated due to MAX_TOKENS');
+      }
 
       return paraphrased;
 
