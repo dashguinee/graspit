@@ -1,1 +1,14 @@
 .vercel
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+/tmp/
+
+# Dependencies
+node_modules/

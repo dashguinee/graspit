@@ -20,8 +20,13 @@ app.use(express.json());
 app.use(express.static('../frontend'));
 
 // Initialize LLM engines - MULTI-LLM system for bulletproof paraphrasing!
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyAZffegve-8w0WQo2AXDotvQrVbdmo0pEM';
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-99b64a1c8d5a4b229335f315f28a50b1';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.error('ERROR: GEMINI_API_KEY environment variable is required');
+  process.exit(1);
+}
 const paraphraser = new MultiLLMParaphraser(GEMINI_API_KEY, DEEPSEEK_API_KEY);
 const quizGen = new GeminiQuizGenerator(GEMINI_API_KEY);
 
