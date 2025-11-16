@@ -107,7 +107,9 @@ Return ONLY valid JSON in this exact format:
       };
 
     } catch (error) {
-      console.error('Error generating quiz with Gemini:', error);
+      console.error('[QUIZ] ERROR generating quiz with Gemini:', error.message);
+      console.error('[QUIZ] Full error:', error);
+      console.error('[QUIZ] Falling back to generic questions');
       // Fallback to simple questions if LLM fails
       return this.generateFallbackQuiz(text);
     }
