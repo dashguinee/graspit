@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graspit - Learn First, Write Better</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>🎓 Graspit</h1>
+      <p class="tagline">You gotta grasp it before you write it.</p>
+    </header>
+
+    <!-- Step 1: Input Text -->
+    <section id="step1" class="step active">
+      <h2>Step 1: Paste Your Text</h2>
+      <textarea
+        id="inputText"
+        placeholder="Paste the text you want to humanize... (minimum 50 characters)"
+        rows="10"
+      ></textarea>
+      <div class="stats">
+        <span id="charCount">0 characters</span>
+      </div>
+      <button onclick="analyzeText()" class="btn-primary">Analyze & Get Quiz 🎯</button>
+    </section>
+
+    <!-- Step 2: Take Quiz -->
+    <section id="step2" class="step">
+      <h2>Step 2: Prove You Grasped It 📚</h2>
+      <p class="quiz-intro">Answer these questions to show you understand the content:</p>
+
+      <div id="quizContainer"></div>
+
+      <div class="quiz-actions">
+        <button onclick="submitQuiz()" class="btn-primary">Submit Quiz ✅</button>
+        <button onclick="resetQuiz()" class="btn-secondary">Start Over</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Get Paraphrase -->
+    <section id="step3" class="step">
+      <h2>Step 3: Your Human-Like Version 🎉</h2>
+
+      <div id="quizResults"></div>
+
+      <div class="comparison">
+        <div class="text-box">
+          <h3>Original (AI: <span id="originalScore">--</span>%)</h3>
+          <p id="originalText"></p>
+        </div>
+
+        <div class="text-box success">
+          <h3>Paraphrased (AI: <span id="newScore">--</span>%)</h3>
+          <p id="paraphrasedText"></p>
+          <button onclick="copyParaphrase()" class="btn-copy">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="improvement">
+        <p>Improvement: <strong id="improvement">--</strong>% less AI-like!</p>
+      </div>
+
+      <button onclick="startOver()" class="btn-secondary">Analyze New Text</button>
+    </section>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Processing...</p>
+    </div>
+
+    <!-- Error Display -->
+    <div id="error" class="error"></div>
+  </div>
+
+  <footer>
+    <p>Built with 💙 by Dash & ZION | Learn first, write better.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
