@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const MultiLLMParaphraser = require('./multi-llm-paraphraser');
 const GeminiQuizGenerator = require('./gemini-quiz-generator');
+const { AssignmentHelper, PRICING } = require('./assignment-helper');
 
 const app = express();
 const PORT = 3100;
@@ -29,6 +30,7 @@ if (!GEMINI_API_KEY) {
 }
 const paraphraser = new MultiLLMParaphraser(GEMINI_API_KEY, DEEPSEEK_API_KEY);
 const quizGen = new GeminiQuizGenerator(GEMINI_API_KEY);
+const assignmentHelper = new AssignmentHelper(GEMINI_API_KEY);
 
 // Store sessions temporarily (would use DB in production)
 const sessions = new Map();
@@ -195,6 +197,126 @@ app.post('/api/paraphrase', (req, res) => {
 });
 
 /**
+ * ========================================
+ * ASSIGNMENT HELPER ENDPOINTS (NEW!)
+ * ========================================
+ */
+
+/**
+ * POST /api/assignment/start
+ * Start new assignment session (Premium or Quick tier)
+ */
+app.post('/api/assignment/start', async (req, res) => {
+  try {
+    const { assignment, tier, context } = req.body;
+
+    if (!assignment || assignment.trim().length < 20) {
+      return res.status(400).json({
+        error: 'Assignment too short. Need at least 20 characters.'
+      });
+    }
+
+    if (!['premium', 'quick'].includes(tier)) {
+      return res.status(400).json({
+        error: 'Invalid tier. Must be "premium" or "quick"'
+      });
+    }
+
+    const result = await assignmentHelper.startSession(assignment, tier, context);
+
+    res.json(result);
+  } catch (error) {
+    console.error('[ASSIGNMENT START] Error:', error.message);
+    res.status(500).json({
+      error: 'Failed to start assignment session',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/assignment/dialogue
+ * Continue ZION dialogue (Premium tier only)
+ */
+app.post('/api/assignment/dialogue', async (req, res) => {
+  try {
+    const { sessionId, response: studentResponse } = req.body;
+
+    if (!sessionId || !studentResponse) {
+      return res.status(400).json({
+        error: 'Missing sessionId or response'
+      });
+    }
+
+    const result = await assignmentHelper.continueDialogue(sessionId, studentResponse);
+
+    res.json(result);
+  } catch (error) {
+    console.error('[ASSIGNMENT DIALOGUE] Error:', error.message);
+    res.status(500).json({
+      error: 'Failed to continue dialogue',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/assignment/progress/:sessionId
+ * Get session progress and readiness
+ */
+app.get('/api/assignment/progress/:sessionId', (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const result = assignmentHelper.getProgress(sessionId);
+
+    res.json(result);
+  } catch (error) {
+    console.error('[ASSIGNMENT PROGRESS] Error:', error.message);
+    res.status(500).json({
+      error: 'Failed to get progress',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/assignment/generate-quiz
+ * Generate quiz based on learning session
+ */
+app.post('/api/assignment/generate-quiz', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        error: 'Missing sessionId'
+      });
+    }
+
+    const result = await assignmentHelper.generateSessionQuiz(sessionId);
+
+    res.json(result);
+  } catch (error) {
+    console.error('[ASSIGNMENT QUIZ] Error:', error.message);
+    res.status(500).json({
+      error: 'Failed to generate quiz',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/assignment/pricing
+ * Get pricing information for both tiers
+ */
+app.get('/api/assignment/pricing', (req, res) => {
+  res.json({
+    success: true,
+    pricing: PRICING
+  });
+});
+
+/**
  * GET /api/health
  * Health check
  */
@@ -202,28 +324,39 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'Graspit API',
-    version: '0.1.0',
-    activeSessions: sessions.size
+    version: '0.2.0',  // Updated version for Assignment Helper
+    activeSessions: sessions.size,
+    assignmentSessions: assignmentHelper.getStats()
   });
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`
-╔═══════════════════════════════════════╗
-║                                       ║
-║          🎓 GRASPIT API 🎓            ║
-║                                       ║
-║  Server running on port ${PORT}        ║
-║  http://localhost:${PORT}              ║
-║                                       ║
-║  Endpoints:                           ║
-║  POST /api/analyze                    ║
-║  POST /api/submit-quiz                ║
-║  POST /api/paraphrase                 ║
-║  GET  /api/health                     ║
-║                                       ║
-╚═══════════════════════════════════════╝
+╔════════════════════════════════════════════╗
+║                                            ║
+║          🎓 GRASPIT API v0.2.0 🎓          ║
+║         With Assignment Helper Mode        ║
+║                                            ║
+║  Server running on port ${PORT}              ║
+║  http://localhost:${PORT}                    ║
+║                                            ║
+║  Core Endpoints:                           ║
+║  POST /api/analyze                         ║
+║  POST /api/submit-quiz                     ║
+║  POST /api/paraphrase                      ║
+║                                            ║
+║  Assignment Helper (NEW!):                 ║
+║  POST /api/assignment/start                ║
+║  POST /api/assignment/dialogue             ║
+║  POST /api/assignment/generate-quiz        ║
+║  GET  /api/assignment/progress/:id         ║
+║  GET  /api/assignment/pricing              ║
+║                                            ║
+║  System:                                   ║
+║  GET  /api/health                          ║
+║                                            ║
+╚════════════════════════════════════════════╝
   `);
 });
 
@@ -232,11 +365,15 @@ setInterval(() => {
   const now = Date.now();
   const thirtyMinutes = 30 * 60 * 1000;
 
+  // Clean up core sessions
   for (const [sessionId, session] of sessions.entries()) {
     if (now - session.timestamp.getTime() > thirtyMinutes) {
       sessions.delete(sessionId);
     }
   }
+
+  // Clean up assignment helper sessions
+  assignmentHelper.cleanup();
 }, 30 * 60 * 1000);
 
 module.exports = app;
