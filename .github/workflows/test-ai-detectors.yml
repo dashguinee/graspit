@@ -1,0 +1,139 @@
+name: AI Detector Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      sample:
+        description: 'Test sample (heavy, medium, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - heavy
+          - medium
+          - all
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  test-heavy:
+    if: ${{ github.event.inputs.sample == 'heavy' || github.event.inputs.sample == 'all' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    name: Test Heavy AI Sample
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r testing/requirements.txt
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      - name: Run test (Heavy AI)
+        run: |
+          python testing/test-ai-detectors.py --sample heavy --headless
+        continue-on-error: true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-heavy
+          path: testing/results/
+          retention-days: 30
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots-heavy
+          path: testing/results/screenshots/
+          retention-days: 30
+
+  test-medium:
+    if: ${{ github.event.inputs.sample == 'medium' || github.event.inputs.sample == 'all' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    name: Test Medium AI Sample
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r testing/requirements.txt
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      - name: Run test (Medium AI)
+        run: |
+          python testing/test-ai-detectors.py --sample medium --headless
+        continue-on-error: true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-medium
+          path: testing/results/
+          retention-days: 30
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots-medium
+          path: testing/results/screenshots/
+          retention-days: 30
+
+  comment-results:
+    needs: [test-heavy, test-medium]
+    if: always()
+    runs-on: ubuntu-latest
+    name: Summarize Results
+
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v3
+        with:
+          path: all-results
+
+      - name: Create summary
+        run: |
+          echo "## AI Detector Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "all-results/test-results-heavy" ]; then
+            echo "### Heavy AI Sample Results" >> $GITHUB_STEP_SUMMARY
+            echo "See artifacts for detailed results and screenshots" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -d "all-results/test-results-medium" ]; then
+            echo "### Medium AI Sample Results" >> $GITHUB_STEP_SUMMARY
+            echo "See artifacts for detailed results and screenshots" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**Artifacts Available**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Test results (JSON)" >> $GITHUB_STEP_SUMMARY
+          echo "- Screenshots (PNG)" >> $GITHUB_STEP_SUMMARY
