@@ -10,10 +10,14 @@ const API_URL = '/api';
 let currentSessionId = null;
 let currentQuiz = null;
 
-// Character count for textarea
+// Character and word count for textarea
 document.getElementById('inputText')?.addEventListener('input', (e) => {
-  const count = e.target.value.length;
-  document.getElementById('charCount').textContent = `${count} characters`;
+  const text = e.target.value;
+  const charCount = text.length;
+  const wordCount = text.trim().length > 0 ? text.trim().split(/\s+/).length : 0;
+
+  document.getElementById('charCount').textContent = `${charCount} characters`;
+  document.getElementById('wordCount').textContent = `${wordCount} words`;
 });
 
 /**
@@ -199,11 +203,28 @@ function displayFlashSummary(summary) {
  * Display paraphrase results
  */
 function displayParaphrase(paraphrase) {
+  // Display text
   document.getElementById('originalText').textContent = paraphrase.original;
   document.getElementById('paraphrasedText').textContent = paraphrase.humanized;
+
+  // Display AI scores
   document.getElementById('originalScore').textContent = paraphrase.originalScore;
   document.getElementById('newScore').textContent = paraphrase.newScore;
   document.getElementById('improvement').textContent = paraphrase.improvement;
+
+  // Calculate and display word counts
+  const originalWords = paraphrase.original.trim().split(/\s+/).length;
+  const humanizedWords = paraphrase.humanized.trim().split(/\s+/).length;
+  const wordDiff = humanizedWords - originalWords;
+  const wordDiffPercent = ((wordDiff / originalWords) * 100).toFixed(1);
+
+  document.getElementById('originalWordCount').textContent = `${originalWords} words`;
+  document.getElementById('humanizedWordCount').textContent = `${humanizedWords} words`;
+
+  // Show word difference with appropriate formatting
+  const diffSign = wordDiff > 0 ? '+' : '';
+  const diffText = `${diffSign}${wordDiff} words (${diffSign}${wordDiffPercent}%)`;
+  document.getElementById('wordDifference').textContent = diffText;
 }
 
 /**
@@ -304,6 +325,7 @@ function startOver() {
   currentQuiz = null;
   document.getElementById('inputText').value = '';
   document.getElementById('charCount').textContent = '0 characters';
+  document.getElementById('wordCount').textContent = '0 words';
   showStep('step1');
 }
 

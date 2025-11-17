@@ -24,6 +24,8 @@
       ></textarea>
       <div class="stats">
         <span id="charCount">0 characters</span>
+        <span class="separator">|</span>
+        <span id="wordCount">0 words</span>
       </div>
       <button onclick="analyzeText()" class="btn-primary">Analyze & Get Quiz 🎯</button>
     </section>
@@ -53,17 +55,24 @@
         <div class="text-box">
           <h3>Original (AI: <span id="originalScore">--</span>%)</h3>
           <p id="originalText"></p>
+          <div class="word-stats">
+            <span id="originalWordCount">-- words</span>
+          </div>
         </div>
 
         <div class="text-box success">
           <h3>Humanized (AI: <span id="newScore">--</span>%)</h3>
           <p id="paraphrasedText"></p>
+          <div class="word-stats">
+            <span id="humanizedWordCount">-- words</span>
+          </div>
           <button onclick="copyParaphrase()" class="btn-copy">📋 Copy</button>
         </div>
       </div>
 
       <div class="improvement">
-        <p>Improvement: <strong id="improvement">--</strong>% less AI-like!</p>
+        <p>AI Detection: <strong id="improvement">--</strong>% less detectable!</p>
+        <p class="word-diff">Word Count: <span id="wordDifference">--</span></p>
       </div>
 
       <!-- Payment Section -->
