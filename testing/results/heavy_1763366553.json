@@ -1,0 +1,42 @@
+{
+  "sample": "heavy",
+  "sample_name": "Heavy AI (Academic)",
+  "timestamp": "2025-11-17T08:02:33.329461",
+  "status": "SUCCESS",
+  "expected": {
+    "original": "80-95% AI",
+    "humanized": "<25% AI"
+  },
+  "original_text": "Artificial intelligence has fundamentally transformed the landscape of modern technology\u2014incorporating machine learning, neural networks, and deep learning\u2014into comprehensive solutions that revolutionize various industries. The implementation of AI systems demonstrates significant potential in addressing complex challenges. Furthermore, it's worth noting that these technologies facilitate unprecedented levels of automation, enhance decision-making processes, and promote innovative approaches to problem-solving. Additionally, the integration of AI encompasses various domains, including healthcare, finance, and education, where it is utilized to optimize performance and deliver substantial value to stakeholders.",
+  "humanized_text": "Artificial intelligence has completely changed modern technology. It brings together machine learning, neural networks, and deep learning. These tools create comprehensive solutions that are revolutionizing many industries. AI systems show a lot of potential for solving complex problems. They also help automate tasks on a huge scale. This improves how decisions are made and encourages new ways to solve problems. Plus, AI is being used across different fields. You can see it in healthcare, finance, and education. In these areas, it helps optimize performance and delivers real value to everyone involved.",
+  "text_stats": {
+    "original_length": 719,
+    "humanized_length": 609,
+    "length_change": -110,
+    "texts_identical": false
+  },
+  "zerogpt": {
+    "original": {
+      "score": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    },
+    "humanized": {
+      "score": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    }
+  },
+  "gptzero": {
+    "original": {
+      "result": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    },
+    "humanized": {
+      "result": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    }
+  }
+}

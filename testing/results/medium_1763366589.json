@@ -1,0 +1,42 @@
+{
+  "sample": "medium",
+  "sample_name": "Medium AI (Blog)",
+  "timestamp": "2025-11-17T08:03:09.076403",
+  "status": "SUCCESS",
+  "expected": {
+    "original": "50-70% AI",
+    "humanized": "<20% AI"
+  },
+  "original_text": "In today's fast-paced world, understanding the importance of digital marketing is crucial for business success. Let's dive into the key strategies that can help you navigate through this complex landscape. First, social media engagement plays a vital role in building brand awareness. Moreover, content marketing facilitates meaningful connections with your target audience. Additionally, data-driven decision making enables businesses to optimize their campaigns effectively.",
+  "humanized_text": "These days, digital marketing is essential for any business that wants to succeed. Social media is a big part of this. It helps build brand awareness and connect with people. Content marketing is also important because it helps you form real connections with your audience. Plus, using data to make decisions lets businesses improve their campaigns and get better results.",
+  "text_stats": {
+    "original_length": 476,
+    "humanized_length": 372,
+    "length_change": -104,
+    "texts_identical": false
+  },
+  "zerogpt": {
+    "original": {
+      "score": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    },
+    "humanized": {
+      "score": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    }
+  },
+  "gptzero": {
+    "original": {
+      "result": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    },
+    "humanized": {
+      "result": "ERROR",
+      "error": "Message: tab crashed\n  (Session info: chrome=142.0.7444.162)\n",
+      "success": false
+    }
+  }
+}
