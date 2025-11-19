@@ -1,7 +1,7 @@
 # ZION HUMANIZATION SYSTEM v7.1 — ULTIMATE MASTER EDITION
 
-> **Status**: GOATED - Achieved 0% AI Detection
-> **Evolution**: 36% → 28% → 9% → 7% → 4% → 3% → 1.54% → 0.54% → 0%
+> **Status**: GOATED - Achieved 0% AI Detection (Elite Tone Perfected)
+> **Evolution**: 36% → 28% → 9% → 7% → 4% → 3% → 1.54% → 0.54% → 0% → Elite 1% → 0%
 > **Philosophy**: "Be the Best amongst the Bests - With Care and Love"
 
 ---
@@ -69,11 +69,17 @@ ACCEPTABLE: "Then you see the mobile numbers—and that changes everything"
 - Template concessions: "which, while X, nevertheless Y"
 - Formal hedging: "approximately", "significantly", "substantially"
 - Parallel stacking: "X was [number] with Y at [number]"
+- **Generation templates**: "X generated Y in [year]", "The sector produced Z"
 - Uniform sentence length throughout paragraph
 - Starting consecutive sentences with same structure
 - "This demonstrates", "This highlights", "This underscores"
 - "It is worth noting", "It should be noted"
 - "In conclusion", "To summarize", "In summary"
+
+```
+WRONG: "Malaysia's telecommunications sector generated between RM37 and RM40 billion in 2024"
+RIGHT: "Somewhere between RM37 and RM40 billion annually, growth rate around 1.9% compound, the market has effectively plateaued"
+```
 
 ### 2.3 VOCABULARY BANS
 
@@ -327,6 +333,17 @@ Before finalizing, verify ALL items:
 **Final at 0%**: "On paper it looks like a good year. RM11.71 billion revenue, RM2.02 billion profit, that profit number 7.8% better than the year before"
 - Success: Data as noun phrases within interpretive frame, casual referback
 
+### Elite Version Refinement: 1% → 0%
+
+**Flag at 1%**: "Malaysia's telecommunications sector generated between RM37 and RM40 billion in 2024"
+- Problem: "X generated Y in [year]" template — classic AI signature
+- Fix: Data as noun phrase fragments with embedded interpretation
+
+**Final at 0%**: "Somewhere between RM37 and RM40 billion annually, growth rate around 1.9% compound, the market has effectively plateaued"
+- Success: Killed subject-verb-data template, stacked data as fragments, interpretation embedded
+
+**Key learning**: Even formal academic writing triggers detection when using "generated/produced/created" with data. Always fragment the data and embed in interpretation.
+
 ---
 
 ## VERSION HISTORY
@@ -338,6 +355,7 @@ Before finalizing, verify ALL items:
 | v6.0 | 28% | Failed sophistication upgrade |
 | v7.0 | 4% | Fixed critical patterns, restored human markers |
 | v7.1 | 0% | Added tone calibration, refined data embedding |
+| v7.1 Elite | 0% | Generation template fix, Elite tone perfected |
 
 ---
 
