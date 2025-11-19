@@ -439,9 +439,16 @@ function runDetector() {
     return;
   }
 
-  const result = ZIONDetector.analyze(text);
-  displayDetectorResults(result);
-  openDetectorModal();
+  // Show loading for visual feedback
+  showLoading(true, 'Analyzing AI patterns...');
+
+  // Small delay so user sees loading (analysis is instant)
+  setTimeout(() => {
+    const result = ZIONDetector.analyze(text);
+    showLoading(false);
+    displayDetectorResults(result);
+    openDetectorModal();
+  }, 500);
 }
 
 /**
