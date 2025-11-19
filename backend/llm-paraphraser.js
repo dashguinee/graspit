@@ -1,83 +1,29 @@
 /**
- * LLM-Powered Paraphraser
- * Encodes ZION's AI detection knowledge into DeepSeek
+ * LLM-Powered Paraphraser (DeepSeek)
+ * Uses ZION v7.1 Humanization System (0% AI Detection)
  */
 
 const fetch = require('node-fetch');
+const { getZIONPrompt } = require('./zion-humanizer-v7');
 
 class LLMParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
     this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-
-    // ZION's knowledge encoded as system prompt
-    this.systemPrompt = `You are an expert at humanizing AI-generated text to pass AI detection.
-
-CRITICAL RULES (from proven 92% → 31% → <10% research):
-
-1. REMOVE ALL EM-DASHES (biggest AI killer!)
-   - Before: "trends—AI, AR, mobile—into solutions"
-   - After: "trends. These include AI, AR, and mobile. Together they create solutions."
-   - Replace with: periods (separate sentences) or simple commas
-
-2. REMOVE AI CONVERSATION CLICHÉS:
-   ❌ "Here's where it gets interesting"
-   ❌ "Let's dive into"
-   ❌ "Here's the thing"
-   ❌ "Now here's the kicker"
-   ❌ "It's worth noting that"
-   Just remove them or replace with direct statements
-
-3. BREAK LONG LIST SENTENCES:
-   - Before: "Platform combines A, B, C, and D into solutions"
-   - After: "Platform combines three features. It includes A. Plus B and C. Together with D."
-   - One main idea per sentence
-
-4. ELIMINATE PARALLEL STRUCTURE:
-   - Before: "It solves X, reduces Y, promotes Z, and maintains W"
-   - After: "This solves X. It cuts down on Y. Users get Z. The system maintains W."
-   - Vary sentence openings and verbs
-
-5. CASUALIZE VERBS (students write casually):
-   developed → built
-   demonstrates → shows
-   indicates → shows
-   utilized → used
-   facilitates → helps
-   encompasses → includes
-   commenced → started
-
-6. ADD NATURAL TRANSITIONS (students use these!):
-   ✅ "First," "Then," "However," "Moreover," "Therefore," "Plus,"
-   ❌ Don't use: "Furthermore," "Additionally," "Consequently"
-   Mix them naturally throughout
-
-7. VARY SENTENCE STRUCTURE:
-   - Don't start 4+ sentences the same way
-   - Mix short (5-10 words) and medium (15-25 words) sentences
-   - Avoid predictable patterns
-
-8. ACTIVE VOICE 90%+:
-   - "We built" not "was built"
-   - "People experience" not "is experienced by people"
-
-9. SIMPLIFY COMPLEX SENTENCES:
-   - Before: "While X and Y, Z"
-   - After: "X happened. Y occurred. This led to Z."
-
-10. REMOVE SEMICOLONS:
-    - University students rarely use them
-    - Replace with periods
-
-CRITICAL: Maintain ALL meaning, facts, and academic quality. Only change HOW it's said, not WHAT it says.
-
-Return ONLY the humanized text, nothing else.`;
   }
 
   /**
-   * Paraphrase text using LLM with ZION's knowledge
+   * Paraphrase text using DeepSeek with ZION v7.1
+   * @param {string} text - Text to humanize
+   * @param {string} tone - 'smart' or 'elite'
    */
-  async paraphrase(text) {
+  async paraphrase(text, tone = 'smart') {
+    console.log('[DEEPSEEK] Starting ZION v7.1 humanization...');
+    console.log('[DEEPSEEK] Tone:', tone);
+
+    // Get the appropriate ZION prompt for the tone
+    const systemPrompt = getZIONPrompt(tone);
+
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -88,11 +34,11 @@ Return ONLY the humanized text, nothing else.`;
         body: JSON.stringify({
           model: 'deepseek-chat',
           messages: [
-            { role: 'system', content: this.systemPrompt },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: `Humanize this text:\n\n${text}` }
           ],
           temperature: 0.7,
-          max_tokens: 2000
+          max_tokens: 4000
         })
       });
 
@@ -104,11 +50,11 @@ Return ONLY the humanized text, nothing else.`;
       const data = await response.json();
       const paraphrased = data.choices[0].message.content.trim();
 
+      console.log('[DEEPSEEK] Paraphrase complete');
       return paraphrased;
 
     } catch (error) {
-      console.error('Error paraphrasing with LLM:', error);
-      // Fallback to rule-based if LLM fails
+      console.error('[DEEPSEEK] Error:', error.message);
       return this.fallbackParaphrase(text);
     }
   }
