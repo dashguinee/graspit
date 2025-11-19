@@ -225,6 +225,9 @@ function displayParaphrase(paraphrase) {
   const diffSign = wordDiff > 0 ? '+' : '';
   const diffText = `${diffSign}${wordDiff} words (${diffSign}${wordDiffPercent}%)`;
   document.getElementById('wordDifference').textContent = diffText;
+
+  // Save to history
+  saveResultToHistory(paraphrase);
 }
 
 /**
@@ -389,4 +392,242 @@ function showPersistentError(message, action) {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Graspit loaded! 🎓');
   showStep('step1');
+
+  // Load saved draft if exists
+  const draft = GraspitStorage.getDraft();
+  if (draft && draft.text) {
+    document.getElementById('inputText').value = draft.text;
+    // Update counts
+    const charCount = draft.text.length;
+    const wordCount = draft.text.trim().length > 0 ? draft.text.trim().split(/\s+/).length : 0;
+    document.getElementById('charCount').textContent = `${charCount} characters`;
+    document.getElementById('wordCount').textContent = `${wordCount} words`;
+  }
+
+  // Auto-save draft on input
+  const prefs = GraspitStorage.getPreferences();
+  if (prefs.autoSave) {
+    document.getElementById('inputText').addEventListener('input', debounce((e) => {
+      GraspitStorage.saveDraft(e.target.value);
+    }, 1000));
+  }
+});
+
+/**
+ * Debounce helper
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Run AI detector on input text
+ */
+function runDetector() {
+  const text = document.getElementById('inputText').value.trim();
+
+  if (text.length < 50) {
+    showError('Please enter at least 50 characters to analyze.');
+    return;
+  }
+
+  const result = ZIONDetector.analyze(text);
+  displayDetectorResults(result);
+  openDetectorModal();
+}
+
+/**
+ * Display detector results in modal
+ */
+function displayDetectorResults(result) {
+  const container = document.getElementById('detectorResults');
+
+  // Score display with color
+  const scoreColor = result.verdict.color;
+
+  let html = `
+    <div class="detector-score" style="background: ${scoreColor}20;">
+      <div class="detector-score-number" style="color: ${scoreColor};">${result.score}%</div>
+      <div class="detector-score-label" style="color: ${scoreColor};">${result.verdict.text}</div>
+    </div>
+  `;
+
+  // Flags
+  if (result.flags.length > 0) {
+    html += '<div class="detector-flags"><h3>Issues Found:</h3>';
+
+    result.flags.forEach(flag => {
+      html += `
+        <div class="detector-flag ${flag.severity}">
+          <div class="detector-flag-header">
+            <span class="detector-flag-name">${flag.name}</span>
+            <span class="detector-flag-score">+${flag.score} points</span>
+          </div>
+          ${flag.issues.length > 0 ? `
+            <ul class="detector-flag-issues">
+              ${flag.issues.map(issue => `<li>${issue}</li>`).join('')}
+            </ul>
+          ` : ''}
+        </div>
+      `;
+    });
+
+    html += '</div>';
+  }
+
+  // Suggestions
+  if (result.suggestions.length > 0) {
+    html += `
+      <div class="detector-suggestions">
+        <h3>How to Fix:</h3>
+        <ul>
+          ${result.suggestions.map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+/**
+ * Open detector modal
+ */
+function openDetectorModal() {
+  document.getElementById('detectorModal').classList.add('active');
+}
+
+/**
+ * Close detector modal
+ */
+function closeDetectorModal() {
+  document.getElementById('detectorModal').classList.remove('active');
+}
+
+/**
+ * Open history modal
+ */
+function openHistoryModal() {
+  renderHistory();
+  document.getElementById('historyModal').classList.add('active');
+}
+
+/**
+ * Close history modal
+ */
+function closeHistoryModal() {
+  document.getElementById('historyModal').classList.remove('active');
+}
+
+/**
+ * Render history list
+ */
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  const history = GraspitStorage.getHistory();
+
+  if (history.length === 0) {
+    container.innerHTML = `
+      <div class="history-empty">
+        <p>No history yet.</p>
+        <p>Your humanized texts will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+
+  history.forEach(entry => {
+    const date = new Date(entry.timestamp).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const preview = entry.humanized.substring(0, 100) + (entry.humanized.length > 100 ? '...' : '');
+
+    html += `
+      <div class="history-item" onclick="loadHistoryEntry(${entry.id})">
+        <div class="history-item-header">
+          <span class="history-item-date">${date}</span>
+          <span class="history-item-score">${entry.improvement} improvement</span>
+        </div>
+        <div class="history-item-preview">${preview}</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+/**
+ * Load history entry into results
+ */
+function loadHistoryEntry(id) {
+  const entry = GraspitStorage.getHistoryEntry(id);
+  if (!entry) return;
+
+  // Display in results
+  document.getElementById('originalText').textContent = entry.original;
+  document.getElementById('paraphrasedText').textContent = entry.humanized;
+  document.getElementById('originalScore').textContent = entry.originalScore;
+  document.getElementById('newScore').textContent = entry.newScore;
+  document.getElementById('improvement').textContent = entry.improvement;
+
+  // Word counts
+  const originalWords = entry.original.split(/\s+/).length;
+  const humanizedWords = entry.humanized.split(/\s+/).length;
+  document.getElementById('originalWordCount').textContent = `${originalWords} words`;
+  document.getElementById('humanizedWordCount').textContent = `${humanizedWords} words`;
+
+  const wordDiff = humanizedWords - originalWords;
+  const diffSign = wordDiff > 0 ? '+' : '';
+  document.getElementById('wordDifference').textContent = `${diffSign}${wordDiff} words`;
+
+  // Close modal and show results
+  closeHistoryModal();
+  showStep('step3');
+}
+
+/**
+ * Save result to history (called after successful humanization)
+ */
+function saveResultToHistory(paraphrase) {
+  GraspitStorage.saveToHistory({
+    original: paraphrase.original,
+    humanized: paraphrase.humanized,
+    originalScore: paraphrase.originalScore,
+    newScore: paraphrase.newScore,
+    improvement: paraphrase.improvement,
+    wordCount: paraphrase.humanized.split(/\s+/).length
+  });
+
+  // Clear draft since we completed
+  GraspitStorage.clearDraft();
+}
+
+// Close modals on outside click
+window.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal')) {
+    e.target.classList.remove('active');
+  }
+});
+
+// Close modals on Escape key
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal.active').forEach(modal => {
+      modal.classList.remove('active');
+    });
+  }
 });

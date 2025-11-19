@@ -12,6 +12,9 @@
     <header>
       <h1>🎓 Graspit</h1>
       <p class="tagline">You gotta grasp it before re-write it.</p>
+      <div class="header-actions">
+        <button onclick="openHistoryModal()" class="btn-icon" title="History">📚</button>
+      </div>
     </header>
 
     <!-- Step 1: Input Text -->
@@ -27,7 +30,10 @@
         <span class="separator">|</span>
         <span id="wordCount">0 words</span>
       </div>
-      <button onclick="analyzeText()" class="btn-primary">Analyze & Get Quiz 🎯</button>
+      <div class="action-buttons">
+        <button onclick="analyzeText()" class="btn-primary">Analyze & Get Quiz 🎯</button>
+        <button onclick="runDetector()" class="btn-secondary">Check AI Score 🔍</button>
+      </div>
     </section>
 
     <!-- Step 2: Take Quiz -->
@@ -117,6 +123,34 @@
     <p>Built with 💙 by Dash & ZION | Learn first, write better.</p>
   </footer>
 
+  <!-- History Modal -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📚 History</h2>
+        <button onclick="closeHistoryModal()" class="modal-close">&times;</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+      <div class="modal-footer">
+        <button onclick="GraspitStorage.exportHistory()" class="btn-secondary">Export JSON</button>
+        <button onclick="GraspitStorage.clearHistory(); renderHistory();" class="btn-danger">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Detector Modal -->
+  <div id="detectorModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>🔍 AI Detection Analysis</h2>
+        <button onclick="closeDetectorModal()" class="modal-close">&times;</button>
+      </div>
+      <div id="detectorResults" class="detector-results"></div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="ai-detector.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

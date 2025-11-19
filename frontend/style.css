@@ -439,3 +439,279 @@ footer p {
   color: #999;
   margin: 5px 0;
 }
+
+/* Header Actions */
+.header-actions {
+  margin-top: 15px;
+}
+
+.btn-icon {
+  background: none;
+  border: 2px solid #667eea;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 0 5px;
+}
+
+.btn-icon:hover {
+  background: #667eea;
+  transform: scale(1.1);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.modal-large {
+  max-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #d32f2f;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 2px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-danger {
+  background: #d32f2f;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-danger:hover {
+  background: #b71c1c;
+}
+
+/* History List */
+.history-list {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.history-item {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #eee;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.history-item:hover {
+  border-color: #667eea;
+  transform: translateX(5px);
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-item-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.history-item-score {
+  background: #4caf50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.history-item-preview {
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+/* Detector Results */
+.detector-results {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.detector-score {
+  text-align: center;
+  padding: 30px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+.detector-score-number {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detector-score-label {
+  font-size: 1.2rem;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.detector-flags {
+  margin-top: 20px;
+}
+
+.detector-flag {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border-left: 4px solid #ff6f00;
+}
+
+.detector-flag.high {
+  border-left-color: #d32f2f;
+  background: #ffebee;
+}
+
+.detector-flag.medium {
+  border-left-color: #ff6f00;
+  background: #fff3e0;
+}
+
+.detector-flag.low {
+  border-left-color: #ffc107;
+  background: #fffde7;
+}
+
+.detector-flag-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detector-flag-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.detector-flag-score {
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.1);
+}
+
+.detector-flag-issues {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.detector-flag-issues li {
+  margin: 4px 0;
+}
+
+.detector-suggestions {
+  background: #e8f5e9;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.detector-suggestions h3 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.detector-suggestions ul {
+  padding-left: 20px;
+}
+
+.detector-suggestions li {
+  margin: 8px 0;
+  line-height: 1.5;
+  color: #333;
+}
