@@ -51,6 +51,15 @@ async function analyzeText() {
     currentSessionId = data.sessionId;
     currentQuiz = data.quiz;
 
+    // Backup session to localStorage (survives serverless restarts)
+    localStorage.setItem('graspit_session', JSON.stringify({
+      sessionId: data.sessionId,
+      originalText: text,
+      quiz: data.quiz,
+      originalScore: data.originalScore,
+      timestamp: Date.now()
+    }));
+
     // Display quiz
     displayQuiz(data.quiz);
 
@@ -113,12 +122,21 @@ async function submitQuiz() {
   showLoading(true, '✨ Evaluating answers & humanizing text...');
 
   try {
+    // Get session backup from localStorage
+    const sessionBackup = JSON.parse(localStorage.getItem('graspit_session') || 'null');
+
     const response = await fetch(`${API_URL}/submit-quiz`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sessionId: currentSessionId,
-        answers: answers
+        answers: answers,
+        // Include backup data for session recovery
+        backup: sessionBackup ? {
+          originalText: sessionBackup.originalText,
+          quiz: sessionBackup.quiz,
+          originalScore: sessionBackup.originalScore
+        } : null
       })
     });
 

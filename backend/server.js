@@ -84,9 +84,24 @@ app.post('/api/analyze', async (req, res) => {
  */
 app.post('/api/submit-quiz', async (req, res) => {
   try {
-    const { sessionId, answers } = req.body;
+    const { sessionId, answers, backup } = req.body;
 
-    const session = sessions.get(sessionId);
+    let session = sessions.get(sessionId);
+
+    // If session not found, try to recover from backup
+    if (!session && backup) {
+      console.log('Session not found, recovering from client backup...');
+      // Handle quiz structure - ensure it has questions property
+      const quizData = backup.quiz.questions ? backup.quiz : { questions: backup.quiz };
+      session = {
+        originalText: backup.originalText,
+        quiz: quizData,
+        originalScore: backup.originalScore
+      };
+      // Store recovered session
+      sessions.set(sessionId, session);
+    }
+
     if (!session) {
       return res.status(404).json({
         error: 'Session expired or not found',
