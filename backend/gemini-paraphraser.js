@@ -40,7 +40,7 @@ class GeminiParaphraser {
           }],
           generationConfig: {
             temperature: 0.7,  // Higher for natural variety
-            maxOutputTokens: 4000
+            maxOutputTokens: 8000  // ~6000 words capacity
           }
         })
       });
