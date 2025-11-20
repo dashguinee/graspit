@@ -27,6 +27,13 @@ RIGHT: "On paper it looks like a good year. RM11.71 billion revenue, RM2.02 bill
 - Casual referbacks: "that profit number", "those figures", "this gap"
 - Never back-to-back data sentences: Split with interpretation
 - Vary prepositions: Mix "at", "around", "near", "roughly"
+- NEVER use "made/generated/brought in" with numbers
+
+WRONG: "They made RM11.71 billion in revenue and RM2.02 billion in profit"
+RIGHT: "On paper it looks fine. RM11.71 billion revenue, RM2.02 billion profit—but then you see revenue growth at 0.2%."
+
+WRONG: "The sector brought in between RM37 and RM40 billion"
+RIGHT: "Somewhere between RM37 and RM40 billion annually. The market has effectively plateaued."
 
 ## SECTION 2: STRICT PROHIBITIONS
 
@@ -41,11 +48,44 @@ RIGHT: "The company is Malaysia's largest operator. It faces challenges."
 
 ### Banned Patterns
 - Template concessions: "which, while X, nevertheless Y"
-- Generation templates: "X generated Y in [year]", "The sector produced Z"
+- Generation templates: "X generated Y in [year]", "The sector produced Z", "brought in between X and Y"
 - Parallel stacking: "X was [number] with Y at [number]"
 - "This demonstrates", "This highlights", "This underscores"
 - "It is worth noting", "It should be noted"
 - "In conclusion", "To summarize", "In summary"
+
+### Template Openers to Avoid
+- "X faces a classic [problem/challenge]" → Use specific observation instead
+- "has to figure out how to" → "needs to", or rephrase entirely
+- "Looking at X helps understand" → Delete or integrate naturally
+
+WRONG: "TM faces a classic strategic problem that many established companies deal with"
+RIGHT: "TM sits in that uncomfortable middle ground. Too big to pivot fast, too slow to match competitors who arrived lighter."
+
+### Corporate Speak Templates
+Never write:
+- "vision is to help build X by using Y to empower Z"
+- "aims to achieve X through Y"
+- "focuses on delivering X"
+
+WRONG: "TM's vision is to help build Digital Malaysia by using technology to empower communities"
+RIGHT: "TM wants to be the backbone for Digital Malaysia. That means connectivity, cloud, the infrastructure layer everything else sits on."
+
+### Transition Templates to Avoid
+- "gets more complicated when you consider"
+- "when you take into account"
+- "upon closer examination"
+
+WRONG: "But the competitive picture gets more complicated when you consider all the dynamics"
+RIGHT: "The competitive picture looks messier the longer you stare at it."
+
+### Conclusion Templates to Avoid
+- "will likely determine how things turn out"
+- "remains to be seen"
+- "only time will tell"
+
+WRONG: "Whether TM can fix these gaps will likely determine how things turn out"
+RIGHT: "Can TM close these gaps before competitors exploit them? That question hangs over everything."
 
 ### Vocabulary Replacements
 - approximately → around, roughly, about

@@ -449,7 +449,7 @@ function debounce(func, wait) {
 /**
  * Run AI detector on input text
  */
-function runDetector() {
+async function runDetector() {
   const text = document.getElementById('inputText').value.trim();
 
   if (text.length < 50) {
@@ -457,16 +457,30 @@ function runDetector() {
     return;
   }
 
-  // Show loading for visual feedback
-  showLoading(true, 'Analyzing AI patterns...');
+  // Show loading for LLM analysis
+  showLoading(true, '🔍 Deep scanning for AI patterns...');
 
-  // Small delay so user sees loading (analysis is instant)
-  setTimeout(() => {
-    const result = ZIONDetector.analyze(text);
-    showLoading(false);
+  try {
+    const response = await fetch(`${API_URL}/detect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Detection failed');
+    }
+
+    const result = await response.json();
     displayDetectorResults(result);
     openDetectorModal();
-  }, 500);
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    showLoading(false);
+  }
 }
 
 /**
@@ -475,31 +489,71 @@ function runDetector() {
 function displayDetectorResults(result) {
   const container = document.getElementById('detectorResults');
 
-  // Score display with color
-  const scoreColor = result.verdict.color;
+  // Get scores (support both old and new format)
+  const aiScore = result.aiScore ?? result.score ?? 50;
+  const humanScore = result.humanScore ?? (100 - aiScore);
+
+  // Determine colors
+  const aiColor = aiScore >= 50 ? '#d32f2f' : aiScore >= 25 ? '#ff6f00' : aiScore >= 10 ? '#ffc107' : '#4caf50';
+  const humanColor = humanScore >= 50 ? '#4caf50' : humanScore >= 25 ? '#ffc107' : '#ff6f00';
 
   let html = `
-    <div class="detector-score" style="background: ${scoreColor}20;">
-      <div class="detector-score-number" style="color: ${scoreColor};">${result.score}%</div>
-      <div class="detector-score-label" style="color: ${scoreColor};">${result.verdict.text}</div>
+    <div class="detector-dual-score">
+      <div class="detector-score-box" style="border-color: ${aiColor};">
+        <div class="detector-score-number" style="color: ${aiColor};">${aiScore}%</div>
+        <div class="detector-score-label">AI Probability</div>
+      </div>
+      <div class="detector-score-box" style="border-color: ${humanColor};">
+        <div class="detector-score-number" style="color: ${humanColor};">${humanScore}%</div>
+        <div class="detector-score-label">Human Probability</div>
+      </div>
+    </div>
+    <div class="detector-verdict">
+      <strong>${result.verdict || 'Analysis Complete'}</strong>
+      ${result.confidence ? `<span class="confidence-badge ${result.confidence}">${result.confidence} confidence</span>` : ''}
     </div>
   `;
 
-  // Flags
-  if (result.flags.length > 0) {
-    html += '<div class="detector-flags"><h3>Issues Found:</h3>';
+  // Summary
+  if (result.summary) {
+    html += `<div class="detector-summary">${result.summary}</div>`;
+  }
 
-    result.flags.forEach(flag => {
+  // Quick Wins
+  if (result.quickWins && result.quickWins.length > 0) {
+    html += `
+      <div class="detector-quickwins">
+        <h3>⚡ Quick Fixes (Highest Impact)</h3>
+        <ol>
+          ${result.quickWins.map(win => `<li>${win}</li>`).join('')}
+        </ol>
+      </div>
+    `;
+  }
+
+  // Flags with excerpts
+  if (result.flags && result.flags.length > 0) {
+    // Sort by priority if available
+    const sortedFlags = [...result.flags].sort((a, b) => (a.priority || 5) - (b.priority || 5));
+
+    html += '<div class="detector-flags"><h3>🚩 Issues Found:</h3>';
+
+    sortedFlags.forEach(flag => {
+      const categoryClass = flag.category === 'missing_human_signal' ? 'missing-signal' : 'ai-pattern';
       html += `
-        <div class="detector-flag ${flag.severity}">
+        <div class="detector-flag ${flag.severity} ${categoryClass}">
           <div class="detector-flag-header">
             <span class="detector-flag-name">${flag.name}</span>
-            <span class="detector-flag-score">+${flag.score} points</span>
+            <div class="detector-flag-badges">
+              ${flag.priority ? `<span class="priority-badge">P${flag.priority}</span>` : ''}
+              <span class="detector-flag-severity">${flag.severity}</span>
+            </div>
           </div>
-          ${flag.issues.length > 0 ? `
-            <ul class="detector-flag-issues">
-              ${flag.issues.map(issue => `<li>${issue}</li>`).join('')}
-            </ul>
+          ${flag.excerpt ? `
+            <div class="detector-flag-excerpt">"${flag.excerpt}"</div>
+          ` : ''}
+          ${flag.suggestion ? `
+            <div class="detector-flag-suggestion">💡 ${flag.suggestion}</div>
           ` : ''}
         </div>
       `;
@@ -508,16 +562,24 @@ function displayDetectorResults(result) {
     html += '</div>';
   }
 
-  // Suggestions
-  if (result.suggestions.length > 0) {
+  // Positives (human signals found)
+  if (result.positives && result.positives.length > 0) {
     html += `
-      <div class="detector-suggestions">
-        <h3>How to Fix:</h3>
-        <ul>
-          ${result.suggestions.map(s => `<li>${s}</li>`).join('')}
-        </ul>
+      <div class="detector-positives">
+        <h3>✅ Human Signals Found</h3>
+        ${result.positives.map(pos => `
+          <div class="positive-item">
+            <strong>${pos.name}</strong>
+            ${pos.excerpt ? `<div class="positive-excerpt">"${pos.excerpt}"</div>` : ''}
+          </div>
+        `).join('')}
       </div>
     `;
+  }
+
+  // No issues
+  if (!result.flags || result.flags.length === 0) {
+    html += '<div class="detector-clean"><p>✅ No significant AI patterns detected!</p></div>';
   }
 
   container.innerHTML = html;
