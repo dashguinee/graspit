@@ -25,7 +25,7 @@ class DeepSeekParaphraser {
     const systemInstruction = getZIONPrompt(tone);
 
     try {
-      console.log('[DEEPSEEK] Calling DeepSeek API (deepseek-reasoner)...');
+      console.log('[DEEPSEEK] Calling DeepSeek API (deepseek-chat)...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -33,7 +33,7 @@ class DeepSeekParaphraser {
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: 'deepseek-reasoner',
+          model: 'deepseek-chat',
           messages: [
             {
               role: 'system',
