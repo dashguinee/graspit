@@ -15,12 +15,15 @@ class MultiLLMParaphraser {
 
   /**
    * Run BOTH LLMs in parallel and pick the best result
+   * @param {string} text - Text to humanize
+   * @param {string} tone - 'smart' or 'elite' (default: 'elite' for 0% AI)
    */
-  async paraphrase(text) {
+  async paraphrase(text, tone = 'elite') {
     console.log('[MULTI-LLM] Starting parallel paraphrasing...');
+    console.log('[MULTI-LLM] Tone:', tone);
 
     const promises = [
-      this.gemini.paraphrase(text).catch(err => ({
+      this.gemini.paraphrase(text, tone).catch(err => ({
         error: true,
         source: 'gemini',
         message: err.message
@@ -30,7 +33,7 @@ class MultiLLMParaphraser {
     // Add DeepSeek if available
     if (this.deepseek) {
       promises.push(
-        this.deepseek.paraphrase(text).catch(err => ({
+        this.deepseek.paraphrase(text, tone).catch(err => ({
           error: true,
           source: 'deepseek',
           message: err.message
