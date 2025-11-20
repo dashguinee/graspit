@@ -489,30 +489,65 @@ async function runDetector() {
 function displayDetectorResults(result) {
   const container = document.getElementById('detectorResults');
 
-  // Determine color based on score
-  let scoreColor;
-  if (result.score >= 50) scoreColor = '#d32f2f';
-  else if (result.score >= 25) scoreColor = '#ff6f00';
-  else if (result.score >= 10) scoreColor = '#ffc107';
-  else scoreColor = '#4caf50';
+  // Get scores (support both old and new format)
+  const aiScore = result.aiScore ?? result.score ?? 50;
+  const humanScore = result.humanScore ?? (100 - aiScore);
+
+  // Determine colors
+  const aiColor = aiScore >= 50 ? '#d32f2f' : aiScore >= 25 ? '#ff6f00' : aiScore >= 10 ? '#ffc107' : '#4caf50';
+  const humanColor = humanScore >= 50 ? '#4caf50' : humanScore >= 25 ? '#ffc107' : '#ff6f00';
 
   let html = `
-    <div class="detector-score" style="background: ${scoreColor}20;">
-      <div class="detector-score-number" style="color: ${scoreColor};">${result.score}%</div>
-      <div class="detector-score-label" style="color: ${scoreColor};">${result.verdict}</div>
+    <div class="detector-dual-score">
+      <div class="detector-score-box" style="border-color: ${aiColor};">
+        <div class="detector-score-number" style="color: ${aiColor};">${aiScore}%</div>
+        <div class="detector-score-label">AI Probability</div>
+      </div>
+      <div class="detector-score-box" style="border-color: ${humanColor};">
+        <div class="detector-score-number" style="color: ${humanColor};">${humanScore}%</div>
+        <div class="detector-score-label">Human Probability</div>
+      </div>
+    </div>
+    <div class="detector-verdict">
+      <strong>${result.verdict || 'Analysis Complete'}</strong>
+      ${result.confidence ? `<span class="confidence-badge ${result.confidence}">${result.confidence} confidence</span>` : ''}
     </div>
   `;
 
+  // Summary
+  if (result.summary) {
+    html += `<div class="detector-summary">${result.summary}</div>`;
+  }
+
+  // Quick Wins
+  if (result.quickWins && result.quickWins.length > 0) {
+    html += `
+      <div class="detector-quickwins">
+        <h3>⚡ Quick Fixes (Highest Impact)</h3>
+        <ol>
+          ${result.quickWins.map(win => `<li>${win}</li>`).join('')}
+        </ol>
+      </div>
+    `;
+  }
+
   // Flags with excerpts
   if (result.flags && result.flags.length > 0) {
-    html += '<div class="detector-flags"><h3>Issues Found:</h3>';
+    // Sort by priority if available
+    const sortedFlags = [...result.flags].sort((a, b) => (a.priority || 5) - (b.priority || 5));
 
-    result.flags.forEach(flag => {
+    html += '<div class="detector-flags"><h3>🚩 Issues Found:</h3>';
+
+    sortedFlags.forEach(flag => {
+      const categoryClass = flag.category === 'missing_human_signal' ? 'missing-signal' : 'ai-pattern';
       html += `
-        <div class="detector-flag ${flag.severity}">
+        <div class="detector-flag ${flag.severity} ${categoryClass}">
           <div class="detector-flag-header">
             <span class="detector-flag-name">${flag.name}</span>
-            <span class="detector-flag-severity">${flag.severity}</span>
+            <div class="detector-flag-badges">
+              ${flag.priority ? `<span class="priority-badge">P${flag.priority}</span>` : ''}
+              <span class="detector-flag-severity">${flag.severity}</span>
+            </div>
           </div>
           ${flag.excerpt ? `
             <div class="detector-flag-excerpt">"${flag.excerpt}"</div>
@@ -525,7 +560,25 @@ function displayDetectorResults(result) {
     });
 
     html += '</div>';
-  } else {
+  }
+
+  // Positives (human signals found)
+  if (result.positives && result.positives.length > 0) {
+    html += `
+      <div class="detector-positives">
+        <h3>✅ Human Signals Found</h3>
+        ${result.positives.map(pos => `
+          <div class="positive-item">
+            <strong>${pos.name}</strong>
+            ${pos.excerpt ? `<div class="positive-excerpt">"${pos.excerpt}"</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // No issues
+  if (!result.flags || result.flags.length === 0) {
     html += '<div class="detector-clean"><p>✅ No significant AI patterns detected!</p></div>';
   }
 
