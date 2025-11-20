@@ -33,9 +33,12 @@ class GeminiParaphraser {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemInstruction }]
+          },
           contents: [{
             parts: [{
-              text: `${systemInstruction}\n\nHumanize this text:\n\n${text}`
+              text: `Humanize this text:\n\n${text}`
             }]
           }],
           generationConfig: {
