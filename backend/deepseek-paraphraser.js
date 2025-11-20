@@ -1,112 +1,31 @@
 /**
  * DeepSeek-Powered Paraphraser
- * Alternative to Gemini with ZION's AI detection knowledge
+ * Uses ZION v7.1 Humanization System (0% AI Detection)
  */
 
 const fetch = globalThis.fetch || require('node-fetch');
+const { getZIONPrompt } = require('./zion-humanizer-v7');
 
 class DeepSeekParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
     this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-
-    // ZION's knowledge encoded as system instruction
-    this.systemInstruction = `You are an expert at humanizing AI-generated text to pass AI detection.
-
-IMPORTANT: Output the COMPLETE humanized version of ALL the text provided. Do not truncate or stop mid-sentence.
-
-CRITICAL RULES (from proven 92% → 31% → <10% research):
-
-1. REMOVE ALL EM-DASHES (biggest AI killer!)
-   - Before: "trends—AI, AR, mobile—into solutions"
-   - After: "trends. These include AI, AR, and mobile. Together they create solutions."
-   - Replace with: periods (separate sentences) or simple commas
-
-2. REMOVE AI CONVERSATION CLICHÉS:
-   ❌ "Here's where it gets interesting"
-   ❌ "Let's dive into"
-   ❌ "Here's the thing"
-   ❌ "Now here's the kicker"
-   ❌ "It's worth noting that"
-   Just remove them or replace with direct statements
-
-3. BREAK LONG LIST SENTENCES:
-   - Before: "Platform combines A, B, C, and D into solutions"
-   - After: "Platform combines three features. It includes A. Plus B and C. Together with D."
-   - One main idea per sentence
-
-4. ELIMINATE PARALLEL STRUCTURE:
-   - Before: "It solves X, reduces Y, promotes Z, and maintains W"
-   - After: "This solves X. It cuts down on Y. Users get Z. The system maintains W."
-   - Vary sentence openings and verbs
-
-5. CASUALIZE VERBS (students write casually):
-   developed → built
-   demonstrates → shows
-   indicates → shows
-   utilized → used
-   facilitates → helps
-   encompasses → includes
-   commenced → started
-
-6. ADD NATURAL TRANSITIONS (students use these!):
-   ✅ "First," "Then," "However," "Moreover," "Therefore," "Plus,"
-   ❌ Don't use: "Furthermore," "Additionally," "Consequently"
-   Mix them naturally throughout
-
-7. VARY SENTENCE STRUCTURE:
-   - Don't start 4+ sentences the same way
-   - Mix short (5-10 words) and medium (15-25 words) sentences
-   - Avoid predictable patterns
-
-8. ACTIVE VOICE 90%+:
-   - "We built" not "was built"
-   - "People experience" not "is experienced by people"
-
-9. SIMPLIFY COMPLEX SENTENCES:
-   - Before: "While X and Y, Z"
-   - After: "X happened. Y occurred. This led to Z."
-
-10. REMOVE SEMICOLONS:
-    - University students rarely use them
-    - Replace with periods
-
-11. ADD NATURAL VARIETY & RANDOMNESS:
-    - Mix sentence lengths: some 6-8 words, some 12-18, occasional 20-25
-    - Don't make it too perfect - humans have slight inconsistencies
-    - Use contractions naturally: "it's", "don't", "that's", "we're"
-    - Occasional simple conjunctions: "and", "but", "so" to start sentences
-    - Break up paragraphs at natural thought shifts (every 3-5 sentences)
-
-12. REMOVE PASSIVE VOICE (biggest AI tell):
-    - "was created by" → "X created"
-    - "is considered" → "people consider" or "experts say"
-    - "can be seen" → "we see" or "you can see"
-    - Active = human, Passive = AI
-
-13. NATURAL IMPERFECTIONS (humans aren't perfect):
-    - Occasional informal phrasing is OK
-    - Don't over-polish - keep it real
-    - Students write confidently but not academically perfect
-    - Some sentences can be a bit loose/casual (that's normal!)
-
-14. VARY WORD CHOICE:
-    - Don't repeat the same transition word twice in a row
-    - Mix up how you start sentences (subject, transition, adverb, etc.)
-    - Use synonyms, but keep them simple and natural
-
-CRITICAL: Maintain ALL meaning, facts, and academic quality. Only change HOW it's said, not WHAT it says. The goal is "smart student who writes naturally", NOT "AI trying to sound human".
-
-Return ONLY the humanized text, nothing else.`;
   }
 
   /**
-   * Paraphrase text using DeepSeek with ZION's knowledge
+   * Paraphrase text using DeepSeek with ZION v7.1
+   * @param {string} text - Text to humanize
+   * @param {string} tone - 'smart' or 'elite'
    */
-  async paraphrase(text) {
-    console.log('[DEEPSEEK] Starting paraphrase...');
+  async paraphrase(text, tone = 'smart') {
+    console.log('[DEEPSEEK] Starting ZION v7.1 humanization...');
+    console.log('[DEEPSEEK] Tone:', tone);
+
+    // Get the appropriate ZION prompt for the tone
+    const systemInstruction = getZIONPrompt(tone);
+
     try {
-      console.log('[DEEPSEEK] Calling DeepSeek API...');
+      console.log('[DEEPSEEK] Calling DeepSeek API (deepseek-reasoner)...');
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -114,19 +33,19 @@ Return ONLY the humanized text, nothing else.`;
           'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
+          model: 'deepseek-reasoner',
           messages: [
             {
               role: 'system',
-              content: this.systemInstruction
+              content: systemInstruction
             },
             {
               role: 'user',
               content: `Humanize this text:\n\n${text}`
             }
           ],
-          temperature: 0.7,  // Higher for natural variety and randomness (human-like inconsistencies)
-          max_tokens: 2000
+          temperature: 0.7,
+          max_tokens: 4000
         })
       });
 
