@@ -718,3 +718,59 @@ footer p {
   line-height: 1.5;
   color: #333;
 }
+
+/* New LLM detector styles */
+.detector-flag-severity {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detector-flag.high .detector-flag-severity {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.detector-flag.medium .detector-flag-severity {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.detector-flag.low .detector-flag-severity {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.detector-flag-excerpt {
+  font-style: italic;
+  color: #555;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 0.9rem;
+  border-left: 3px solid #667eea;
+}
+
+.detector-flag-suggestion {
+  color: #2e7d32;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.detector-clean {
+  text-align: center;
+  padding: 40px 20px;
+  background: #e8f5e9;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.detector-clean p {
+  color: #2e7d32;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}

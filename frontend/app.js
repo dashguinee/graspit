@@ -449,7 +449,7 @@ function debounce(func, wait) {
 /**
  * Run AI detector on input text
  */
-function runDetector() {
+async function runDetector() {
   const text = document.getElementById('inputText').value.trim();
 
   if (text.length < 50) {
@@ -457,16 +457,30 @@ function runDetector() {
     return;
   }
 
-  // Show loading for visual feedback
-  showLoading(true, 'Analyzing AI patterns...');
+  // Show loading for LLM analysis
+  showLoading(true, '🔍 Deep scanning for AI patterns...');
 
-  // Small delay so user sees loading (analysis is instant)
-  setTimeout(() => {
-    const result = ZIONDetector.analyze(text);
-    showLoading(false);
+  try {
+    const response = await fetch(`${API_URL}/detect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Detection failed');
+    }
+
+    const result = await response.json();
     displayDetectorResults(result);
     openDetectorModal();
-  }, 500);
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    showLoading(false);
+  }
 }
 
 /**
@@ -475,18 +489,22 @@ function runDetector() {
 function displayDetectorResults(result) {
   const container = document.getElementById('detectorResults');
 
-  // Score display with color
-  const scoreColor = result.verdict.color;
+  // Determine color based on score
+  let scoreColor;
+  if (result.score >= 50) scoreColor = '#d32f2f';
+  else if (result.score >= 25) scoreColor = '#ff6f00';
+  else if (result.score >= 10) scoreColor = '#ffc107';
+  else scoreColor = '#4caf50';
 
   let html = `
     <div class="detector-score" style="background: ${scoreColor}20;">
       <div class="detector-score-number" style="color: ${scoreColor};">${result.score}%</div>
-      <div class="detector-score-label" style="color: ${scoreColor};">${result.verdict.text}</div>
+      <div class="detector-score-label" style="color: ${scoreColor};">${result.verdict}</div>
     </div>
   `;
 
-  // Flags
-  if (result.flags.length > 0) {
+  // Flags with excerpts
+  if (result.flags && result.flags.length > 0) {
     html += '<div class="detector-flags"><h3>Issues Found:</h3>';
 
     result.flags.forEach(flag => {
@@ -494,30 +512,21 @@ function displayDetectorResults(result) {
         <div class="detector-flag ${flag.severity}">
           <div class="detector-flag-header">
             <span class="detector-flag-name">${flag.name}</span>
-            <span class="detector-flag-score">+${flag.score} points</span>
+            <span class="detector-flag-severity">${flag.severity}</span>
           </div>
-          ${flag.issues.length > 0 ? `
-            <ul class="detector-flag-issues">
-              ${flag.issues.map(issue => `<li>${issue}</li>`).join('')}
-            </ul>
+          ${flag.excerpt ? `
+            <div class="detector-flag-excerpt">"${flag.excerpt}"</div>
+          ` : ''}
+          ${flag.suggestion ? `
+            <div class="detector-flag-suggestion">💡 ${flag.suggestion}</div>
           ` : ''}
         </div>
       `;
     });
 
     html += '</div>';
-  }
-
-  // Suggestions
-  if (result.suggestions.length > 0) {
-    html += `
-      <div class="detector-suggestions">
-        <h3>How to Fix:</h3>
-        <ul>
-          ${result.suggestions.map(s => `<li>${s}</li>`).join('')}
-        </ul>
-      </div>
-    `;
+  } else {
+    html += '<div class="detector-clean"><p>✅ No significant AI patterns detected!</p></div>';
   }
 
   container.innerHTML = html;

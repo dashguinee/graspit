@@ -346,12 +346,108 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
+/**
+ * POST /api/detect
+ * LLM-based AI detection using ZION patterns
+ */
+app.post('/api/detect', async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || text.trim().length < 50) {
+      return res.status(400).json({
+        error: 'Text too short. Need at least 50 characters to analyze.'
+      });
+    }
+
+    const detectionPrompt = `You are an AI detection expert. Analyze this text for AI-generated patterns.
+
+## DETECTION CRITERIA (Check each one)
+
+1. **Em-dash Overuse**: More than 1 em-dash (—) per 400 words, especially sandwich patterns (word—explanation—word)
+2. **Generation Templates**: "X generated/made/brought in Y in [year]", "The sector produced Z"
+3. **Template Openers**: "X faces a classic problem", "has to figure out how to"
+4. **Corporate Speak**: "vision is to help build X by using Y to empower Z"
+5. **Subject-Verb-Number**: "Revenue was X", "They made Y billion"
+6. **Parallel Stacking**: "X was [number] with Y at [number]"
+7. **Template Transitions**: "gets more complicated when you consider"
+8. **Template Conclusions**: "will likely determine", "remains to be seen"
+9. **Formal Hedging**: "approximately", "significantly", "consequently", "furthermore"
+10. **AI Phrases**: "this demonstrates", "it is worth noting", "in conclusion"
+11. **Sentence Uniformity**: All sentences similar length (low variation)
+12. **Missing Process Markers**: No phrases like "took us a while", "initially thought", "tricky part"
+
+## OUTPUT FORMAT (JSON only, no markdown)
+{
+  "score": <0-100, higher = more AI-like>,
+  "verdict": "<Likely AI Generated | Possibly AI Generated | Some AI Patterns | Likely Human Written>",
+  "flags": [
+    {
+      "name": "<pattern name>",
+      "severity": "<high|medium|low>",
+      "excerpt": "<exact quote from text>",
+      "suggestion": "<how to fix>"
+    }
+  ]
+}
+
+## TEXT TO ANALYZE:
+${text}
+
+Return ONLY valid JSON, no explanation.`;
+
+    // Use Gemini for detection
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: detectionPrompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 2000
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Gemini API call failed');
+    }
+
+    const data = await response.json();
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Parse JSON from response
+    let result;
+    try {
+      // Clean up response - remove markdown code blocks if present
+      const cleanJson = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      result = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error('Failed to parse detection result:', resultText);
+      result = {
+        score: 50,
+        verdict: 'Analysis Error',
+        flags: [{ name: 'Parse Error', severity: 'high', excerpt: 'Could not parse LLM response', suggestion: 'Try again' }]
+      };
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error in /api/detect:', error);
+    res.status(500).json({ error: 'Detection failed: ' + error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════╗
 ║                                            ║
-║          🎓 GRASPIT API v0.2.0 🎓          ║
-║         With Assignment Helper Mode        ║
+║          🎓 GRASPIT API v0.3.0 🎓          ║
+║      With LLM Detection + Assignment       ║
 ║                                            ║
 ║  Server running on port ${PORT}              ║
 ║  http://localhost:${PORT}                    ║
@@ -360,8 +456,9 @@ app.listen(PORT, () => {
 ║  POST /api/analyze                         ║
 ║  POST /api/submit-quiz                     ║
 ║  POST /api/paraphrase                      ║
+║  POST /api/detect (NEW!)                   ║
 ║                                            ║
-║  Assignment Helper (NEW!):                 ║
+║  Assignment Helper:                        ║
 ║  POST /api/assignment/start                ║
 ║  POST /api/assignment/dialogue             ║
 ║  POST /api/assignment/generate-quiz        ║
