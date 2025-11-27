@@ -38,6 +38,12 @@ header h1 {
   font-style: italic;
 }
 
+.subtitle {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 5px;
+}
+
 .step {
   display: none;
 }
@@ -911,4 +917,150 @@ footer p {
   color: #666;
   font-size: 0.9rem;
   margin-top: 5px;
+}
+
+/* Tone Selector */
+.tone-selector {
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 12px;
+  border: 2px solid #e8ecff;
+}
+
+.tone-label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.tone-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+@media (max-width: 500px) {
+  .tone-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tone-option {
+  cursor: pointer;
+}
+
+.tone-option input[type="radio"] {
+  display: none;
+}
+
+.tone-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 15px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.tone-option:hover .tone-card {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.15);
+}
+
+.tone-option.selected .tone-card,
+.tone-option input:checked + .tone-card {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+}
+
+.tone-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.tone-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.tone-desc {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* APEX Badge */
+.apex-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+/* Enhanced Header */
+header h1 {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+/* Version Badge */
+.version-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+/* Pulse animation for new features */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+.new-feature {
+  animation: pulse 2s infinite;
+}
+
+/* Improved text box styling */
+.text-box p {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Loading improvements */
+.loading p {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  animation: fadeInOut 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }

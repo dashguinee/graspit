@@ -21,10 +21,19 @@ document.getElementById('inputText')?.addEventListener('input', (e) => {
 });
 
 /**
+ * Get selected tone from UI
+ */
+function getSelectedTone() {
+  const selected = document.querySelector('input[name="tone"]:checked');
+  return selected ? selected.value : 'apex';
+}
+
+/**
  * Step 1: Analyze text and get quiz
  */
 async function analyzeText() {
   const text = document.getElementById('inputText').value.trim();
+  const tone = getSelectedTone();
 
   if (text.length < 50) {
     showError('Please enter at least 50 characters.');
@@ -37,7 +46,7 @@ async function analyzeText() {
     const response = await fetch(`${API_URL}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text, tone })
     });
 
     if (!response.ok) {
@@ -409,6 +418,7 @@ function showPersistentError(message, action) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Graspit loaded! 🎓');
+  console.log('APEX V9 Humanization System Active');
   showStep('step1');
 
   // Load saved draft if exists
@@ -429,6 +439,18 @@ document.addEventListener('DOMContentLoaded', () => {
       GraspitStorage.saveDraft(e.target.value);
     }, 1000));
   }
+
+  // Tone selector interaction
+  document.querySelectorAll('.tone-option').forEach(option => {
+    option.addEventListener('click', function() {
+      // Remove selected class from all
+      document.querySelectorAll('.tone-option').forEach(o => o.classList.remove('selected'));
+      // Add to clicked
+      this.classList.add('selected');
+      // Check the radio
+      this.querySelector('input[type="radio"]').checked = true;
+    });
+  });
 });
 
 /**

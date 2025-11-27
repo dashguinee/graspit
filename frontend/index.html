@@ -10,8 +10,9 @@
   <div class="container">
     <!-- Header -->
     <header>
-      <h1>🎓 Graspit</h1>
-      <p class="tagline">You gotta grasp it before re-write it.</p>
+      <h1>🎓 Graspit <span class="version-badge">APEX V9</span></h1>
+      <p class="tagline">You gotta grasp it before you re-write it.</p>
+      <p class="subtitle">Powered by high-entropy humanization for undetectable results</p>
       <div class="header-actions">
         <button onclick="openHistoryModal()" class="btn-icon" title="History">📚</button>
       </div>
@@ -30,6 +31,30 @@
         <span class="separator">|</span>
         <span id="wordCount">0 words</span>
       </div>
+
+      <!-- Tone Selector -->
+      <div class="tone-selector">
+        <label class="tone-label">Humanization Style:</label>
+        <div class="tone-options">
+          <label class="tone-option selected" data-tone="apex">
+            <input type="radio" name="tone" value="apex" checked>
+            <div class="tone-card">
+              <span class="tone-icon">⚡</span>
+              <span class="tone-name">APEX V9</span>
+              <span class="tone-desc">Consultant voice, staccato fragments</span>
+            </div>
+          </label>
+          <label class="tone-option" data-tone="apex-academic">
+            <input type="radio" name="tone" value="apex-academic">
+            <div class="tone-card">
+              <span class="tone-icon">🎓</span>
+              <span class="tone-name">Academic</span>
+              <span class="tone-desc">British spelling, scholarly tone</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <div class="action-buttons">
         <button onclick="analyzeText()" class="btn-primary">Analyze & Get Quiz 🎯</button>
         <button onclick="runDetector()" class="btn-secondary">Check AI Score 🔍</button>
