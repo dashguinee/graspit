@@ -9,7 +9,7 @@ const fetch = globalThis.fetch || require('node-fetch');
 class GeminiQuizGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     this.minimumPassScore = 60; // Lowered from 70% - we want to verify they grasp content, not exam perfection
     this.maxRetries = 2; // Retry Gemini calls before falling back
   }
