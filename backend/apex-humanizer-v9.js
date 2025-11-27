@@ -89,7 +89,7 @@ function getAPEXPrompt(mode = 'apex') {
  * These settings create the entropy required to break AI patterns
  */
 const APEX_CONFIG = {
-  model: 'gemini-1.5-pro-002',
+  model: 'gemini-2.5-flash',  // Updated from retired gemini-1.5-pro-002
   temperature: 1.35,
   topP: 0.90,
   topK: 40,
