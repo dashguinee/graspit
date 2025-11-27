@@ -1,0 +1,43 @@
+{
+  "freeuser": {
+    "handle": "freeuser",
+    "firstUse": "2025-11-17T09:00:00.000Z",
+    "uses": 4,
+    "tier": "standard",
+    "sessions": [
+      "session1",
+      "session2",
+      "session3",
+      "free_session_4"
+    ],
+    "paid": false,
+    "follower": null,
+    "lastUse": "2025-11-17T09:21:52.207Z"
+  },
+  "paiduser": {
+    "handle": "paiduser",
+    "firstUse": "2025-11-17T08:00:00.000Z",
+    "uses": 11,
+    "tier": "premium",
+    "sessions": [
+      "paid1",
+      "paid2",
+      "paid3",
+      "paid_session_11"
+    ],
+    "paid": true,
+    "follower": true,
+    "lastUse": "2025-11-17T09:21:53.331Z"
+  },
+  "dashaziz_": {
+    "handle": "dashaziz_",
+    "firstUse": "2025-11-17T10:45:31.059Z",
+    "uses": 1,
+    "tier": "standard",
+    "sessions": [
+      "1763376010554"
+    ],
+    "paid": false,
+    "follower": null
+  }
+}

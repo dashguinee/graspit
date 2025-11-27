@@ -1,32 +1,45 @@
 /**
  * Gemini-Powered Paraphraser
- * Uses ZION v7.1 Humanization System (0% AI Detection)
+ * Uses APEX V9 Humanization System (1% AI Detection Target)
+ *
+ * ZION v7.1 archived to /archive/ - did not achieve target detection rates
  */
 
 // Use native fetch (Node 18+) or node-fetch as fallback
 const fetch = globalThis.fetch || require('node-fetch');
-const { getZIONPrompt } = require('./zion-humanizer-v7');
+const { getAPEXPrompt, APEX_CONFIG } = require('./apex-humanizer-v9');
 
 class GeminiParaphraser {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // APEX V9 uses gemini-1.5-pro-002
+    this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${APEX_CONFIG.model}:generateContent?key=${apiKey}`;
   }
 
   /**
-   * Paraphrase text using Gemini with ZION v7.1
+   * Paraphrase text using APEX V9
    * @param {string} text - Text to humanize
-   * @param {string} tone - 'smart' or 'elite'
+   * @param {string} tone - 'apex' (default) or 'apex-academic'
    */
-  async paraphrase(text, tone = 'smart') {
-    console.log('[PARAPHRASER] Starting ZION v7.1 humanization...');
+  async paraphrase(text, tone = 'apex') {
+    console.log('[PARAPHRASER] Starting APEX V9 humanization...');
     console.log('[PARAPHRASER] Tone:', tone);
 
-    // Get the appropriate ZION prompt for the tone
-    const systemInstruction = getZIONPrompt(tone);
+    // Get APEX prompt (apex or apex-academic)
+    const systemInstruction = getAPEXPrompt(tone);
+
+    // APEX V9 config - DO NOT CHANGE THESE VALUES
+    const genConfig = {
+      temperature: APEX_CONFIG.temperature,  // 1.35 - high entropy
+      topP: APEX_CONFIG.topP,                // 0.90
+      topK: APEX_CONFIG.topK,                // 40
+      maxOutputTokens: APEX_CONFIG.maxOutputTokens  // 8192
+    };
 
     try {
-      console.log('[PARAPHRASER] Calling Gemini API...');
+      console.log(`[PARAPHRASER] Calling Gemini API (${APEX_CONFIG.model})...`);
+      console.log(`[PARAPHRASER] Config: temp=${genConfig.temperature}, topP=${genConfig.topP}, topK=${genConfig.topK}`);
+
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -35,13 +48,10 @@ class GeminiParaphraser {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `${systemInstruction}\n\nHumanize this text:\n\n${text}`
+              text: `${systemInstruction}\n\n${text}`
             }]
           }],
-          generationConfig: {
-            temperature: 0.7,  // Higher for natural variety
-            maxOutputTokens: 4000
-          }
+          generationConfig: genConfig
         })
       });
 
@@ -86,12 +96,12 @@ class GeminiParaphraser {
 
     // 1. PUNCTUATION PATTERNS (max 25 points)
     const emDashCount = (text.match(/—/g) || []).length;
-    score += Math.min(emDashCount * 12, 20); // Max 20 for em-dashes (increased weight)
+    score += Math.min(emDashCount * 12, 20);
 
     const semicolonCount = (text.match(/;/g) || []).length;
-    score += Math.min(semicolonCount * 2.5, 5); // Max 5 for semicolons (increased weight)
+    score += Math.min(semicolonCount * 2.5, 5);
 
-    // 2. AI CLICHÉS - Comprehensive list (max 30 points)
+    // 2. AI CLICHÉS (max 50 points)
     const aiClichés = [
       "here's where it gets interesting", "here's the thing", "let's dive into",
       "it's worth noting", "in today's fast-paced world", "it's important to note",
@@ -115,37 +125,28 @@ class GeminiParaphraser {
       if (lowerText.includes(cliché)) clichéCount++;
     });
 
-    // Base score for clichés (increased from 6 to 8 - major AI indicator)
     let clichéScore = clichéCount * 8;
-
-    // DENSITY BONUS: Multiple clichés in short text = obvious AI
     const wordCount = words.length;
     if (wordCount > 0 && wordCount < 200) {
-      const density = clichéCount / (wordCount / 50); // Clichés per 50 words
-      if (density > 2) clichéScore *= 1.5; // 50% bonus for high density
-      else if (density > 1) clichéScore *= 1.2; // 20% bonus for moderate density
+      const density = clichéCount / (wordCount / 50);
+      if (density > 2) clichéScore *= 1.5;
+      else if (density > 1) clichéScore *= 1.2;
     }
-
-    score += Math.min(clichéScore, 50); // Max 50 for clichés
+    score += Math.min(clichéScore, 50);
 
     // 3. SENTENCE STRUCTURE (max 20 points)
-    // Check for uniform sentence lengths (AI loves consistency)
     if (sentences.length >= 3) {
       const sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
       const avgLength = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
       const variance = sentenceLengths.reduce((sum, len) => sum + Math.pow(len - avgLength, 2), 0) / sentenceLengths.length;
-
-      // Low variance = very uniform = AI-like
       if (variance < 30) score += 8;
-      if (variance < 20) score += 4; // Additional 4 for very uniform
+      if (variance < 20) score += 4;
     }
 
-    // Overly long sentences
     const longSentences = sentences.filter(s => s.trim().split(/\s+/).length > 35).length;
-    score += Math.min(longSentences * 2, 8); // Max 8 for long sentences
+    score += Math.min(longSentences * 2, 8);
 
-    // 4. VOCABULARY ANALYSIS (max 15 points)
-    // Formal/academic words
+    // 4. VOCABULARY ANALYSIS (max 20 points)
     const formalWords = [
       'utilize', 'facilitate', 'demonstrate', 'substantial', 'comprehensive',
       'significant', 'considerable', 'numerous', 'various', 'particular',
@@ -159,25 +160,21 @@ class GeminiParaphraser {
       if (matches) formalCount += matches.length;
     });
 
-    // Base score for formal words
     let formalScore = formalCount * 2.5;
-
-    // DENSITY BONUS: High formal word concentration in short text
     if (wordCount > 0 && wordCount < 200) {
-      const formalDensity = formalCount / (wordCount / 50); // Formal words per 50 words
-      if (formalDensity > 3) formalScore *= 1.4; // 40% bonus for academic overkill
+      const formalDensity = formalCount / (wordCount / 50);
+      if (formalDensity > 3) formalScore *= 1.4;
     }
+    score += Math.min(formalScore, 20);
 
-    score += Math.min(formalScore, 20); // Max 20 for formal words (increased cap)
-
-    // Adverb overuse (AI loves adverbs)
+    // Adverbs
     const adverbs = ['particularly', 'significantly', 'notably', 'especially', 'specifically',
                      'certainly', 'absolutely', 'definitely', 'clearly', 'obviously'];
     let adverbCount = 0;
     adverbs.forEach(adv => {
       if (lowerText.includes(adv)) adverbCount++;
     });
-    score += Math.min(adverbCount * 2, 10); // Max 10 for adverbs (doubled weight)
+    score += Math.min(adverbCount * 2, 10);
 
     // 5. PARAGRAPH STRUCTURE (max 10 points)
     const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
@@ -185,31 +182,27 @@ class GeminiParaphraser {
       const paraLengths = paragraphs.map(p => p.length);
       const avgParaLength = paraLengths.reduce((a, b) => a + b, 0) / paraLengths.length;
       const paraVariance = paraLengths.reduce((sum, len) => sum + Math.pow(len - avgParaLength, 2), 0) / paraLengths.length;
-
-      // Very uniform paragraph lengths
       if (paraVariance < 500) score += 5;
-      if (paraVariance < 200) score += 5; // Additional 5 for extremely uniform
+      if (paraVariance < 200) score += 5;
     }
 
-    // 6. PASSIVE VOICE DETECTION (major AI tell - max 15 points)
+    // 6. PASSIVE VOICE (max 15 points)
     const passivePatterns = /\b(is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi;
     const passiveMatches = text.match(passivePatterns);
     const passiveCount = passiveMatches ? passiveMatches.length : 0;
 
     if (sentences.length > 0) {
       const passiveRatio = passiveCount / sentences.length;
-      if (passiveRatio > 0.4) score += 15; // More than 40% passive = AI
-      else if (passiveRatio > 0.25) score += 10; // 25-40% passive = likely AI
-      else if (passiveRatio > 0.15) score += 5; // 15-25% passive = some AI traits
+      if (passiveRatio > 0.4) score += 15;
+      else if (passiveRatio > 0.25) score += 10;
+      else if (passiveRatio > 0.15) score += 5;
     }
 
-    // 7. OTHER AI SIGNATURES (max 10 points)
-    // Lists and enumerations (AI loves structure)
+    // 7. LIST PATTERNS (max 10 points)
     const listPatterns = /(?:first|second|third|finally|additionally|lastly)[\s,]/gi;
     const listMatches = text.match(listPatterns);
-    if (listMatches) score += Math.min(listMatches.length * 2, 10); // Doubled weight
+    if (listMatches) score += Math.min(listMatches.length * 2, 10);
 
-    // Total possible: ~155 points across all categories, capped at 100%
     return Math.min(Math.round(score), 100);
   }
 
@@ -218,15 +211,10 @@ class GeminiParaphraser {
    */
   fallbackParaphrase(text) {
     let result = text;
-
-    // Remove em-dashes
     result = result.replace(/—([^—]+)—/g, '. $1.');
     result = result.replace(/—/g, '. ');
-
-    // Remove semicolons
     result = result.replace(/;/g, '.');
 
-    // Casualize some verbs
     const replacements = {
       'developed': 'built',
       'demonstrates': 'shows',

@@ -41,7 +41,11 @@ const sessions = new Map();
  */
 app.post('/api/analyze', async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, tone } = req.body;
+
+    // Valid tones: 'smart', 'elite', 'apex' (default), 'apex-academic'
+    const validTones = ['smart', 'elite', 'apex', 'apex-academic'];
+    const selectedTone = validTones.includes(tone) ? tone : 'apex';
 
     if (!text || text.trim().length < 50) {
       return res.status(400).json({
@@ -61,14 +65,18 @@ app.post('/api/analyze', async (req, res) => {
       originalText: text,
       quiz: quiz,
       originalScore: originalScore,
+      tone: selectedTone,  // Store tone for use in paraphrasing
       timestamp: new Date()
     });
+
+    console.log(`[SESSION] Created ${sessionId} with tone: ${selectedTone}`);
 
     res.json({
       sessionId: sessionId,
       quiz: quiz.questions,
       passScore: quiz.passScore,
       originalAIScore: originalScore,
+      tone: selectedTone,
       message: 'Complete the quiz to unlock your paraphrase! 📚'
     });
 
@@ -121,8 +129,10 @@ app.post('/api/submit-quiz', async (req, res) => {
       // Generate flash summary using LLM
       const flashSummary = await quizGen.generateFlashSummary(session.originalText);
 
-      // Generate paraphrase using LLM with ZION's knowledge
-      const paraphrased = await paraphraser.paraphrase(session.originalText);
+      // Generate paraphrase using LLM with APEX V9 / ZION
+      const tone = session.tone || 'apex';
+      console.log(`[PARAPHRASE] Using tone: ${tone}`);
+      const paraphrased = await paraphraser.paraphrase(session.originalText, tone);
       const newScore = paraphraser.estimateAIScore(paraphrased);
 
       // Store in session
